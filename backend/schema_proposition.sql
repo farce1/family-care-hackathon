@@ -88,6 +88,40 @@ CREATE TABLE appointments (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Parsed Appointments table (stores extracted appointment data from uploaded PDFs)
+CREATE TABLE parsed_appointments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    family_member_id UUID REFERENCES family_members(id) ON DELETE SET NULL,
+    original_filename VARCHAR(500) NOT NULL,
+    name VARCHAR(500) NOT NULL, -- Title/name of the appointment from PDF
+    date DATE NOT NULL,
+    appointment_type VARCHAR(50) NOT NULL CHECK (appointment_type IN (
+        'General Checkup',
+        'Dental',
+        'Vision',
+        'Specialist',
+        'Vaccination',
+        'Follow-up',
+        'Emergency',
+        'Lab Work',
+        'Physical Therapy',
+        'Mental Health',
+        'Veterinary'
+    )),
+    summary TEXT, -- Medical findings, diagnosis, or recommendations
+    doctor VARCHAR(255), -- Doctor name or facility name
+    file_size BIGINT NOT NULL, -- File size in bytes
+    raw_file_data BYTEA, -- Optional: store the original PDF if needed
+    processing_status VARCHAR(20) NOT NULL DEFAULT 'completed' CHECK (processing_status IN (
+        'completed',
+        'failed',
+        'processing'
+    )),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indexes for performance optimization
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_family ON users(family_id);
@@ -100,6 +134,12 @@ CREATE INDEX idx_files_date ON files(date DESC);
 CREATE INDEX idx_appointments_family_member ON appointments(family_member_id);
 CREATE INDEX idx_appointments_date_time ON appointments(date_time);
 CREATE INDEX idx_appointments_status ON appointments(status);
+
+CREATE INDEX idx_parsed_appointments_user ON parsed_appointments(user_id);
+CREATE INDEX idx_parsed_appointments_family_member ON parsed_appointments(family_member_id);
+CREATE INDEX idx_parsed_appointments_date ON parsed_appointments(date);
+CREATE INDEX idx_parsed_appointments_type ON parsed_appointments(appointment_type);
+CREATE INDEX idx_parsed_appointments_status ON parsed_appointments(processing_status);
 
 -- Trigger function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -123,12 +163,16 @@ CREATE TRIGGER update_family_members_updated_at BEFORE UPDATE ON family_members
 CREATE TRIGGER update_appointments_updated_at BEFORE UPDATE ON appointments
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_parsed_appointments_updated_at BEFORE UPDATE ON parsed_appointments
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- Comments for documentation
 COMMENT ON TABLE families IS 'Stores family information';
 COMMENT ON TABLE users IS 'User authentication and account information - belongs to a family';
 COMMENT ON TABLE family_members IS 'Stores family member information including humans and pets';
 COMMENT ON TABLE files IS 'Stores complete file data in database (medical documents, images, etc.)';
 COMMENT ON TABLE appointments IS 'Stores medical appointments for family members';
+COMMENT ON TABLE parsed_appointments IS 'Stores parsed appointment data extracted from uploaded PDF medical documents';
 
 COMMENT ON COLUMN users.family_id IS 'Reference to the family this user belongs to';
 COMMENT ON COLUMN family_members.allergies IS 'Array of allergy strings';
