@@ -79,7 +79,6 @@ function getStatusDisplay(status: string) {
 }
 
 export default function Home() {
-  const documentCount = currentUserDocuments.length;
   const upcomingAppointments = getUpcomingAppointments();
   const archivalAppointments = getArchivalAppointments();
 

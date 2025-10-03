@@ -17,7 +17,7 @@ interface NFZApiResponse {
     count: number;
     page: number;
     limit: number;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   links: {
     first: string;
@@ -54,10 +54,10 @@ interface NFZQueueItem {
         "average-period": number;
         update: string;
       };
-      "computed-data": any;
+      "computed-data": unknown;
     };
     // Add other fields as needed
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
