@@ -70,7 +70,6 @@ interface ParsedNFZItem {
   locality: string;
   date: string;
   benefit: string;
-  waitingPeople: number;
   averageWaitDays: number;
   latitude: number;
   longitude: number;
@@ -141,7 +140,6 @@ async function getNFZQueues(params: NFZQueueParams = {}): Promise<ParsedNFZItem[
         locality: attrs.locality || 'Unknown city',
         date: attrs.dates?.date || 'No date available',
         benefit: attrs.benefit || 'Unknown benefit',
-        waitingPeople: attrs.statistics?.["provider-data"]?.awaiting || 0,
         averageWaitDays: attrs.statistics?.["provider-data"]?.["average-period"] || 0,
         latitude: attrs.latitude || 0,
         longitude: attrs.longitude || 0
@@ -178,7 +176,6 @@ async function main() {
       console.log('Address:', clinic.address);
       console.log('Phone:', clinic.phone);
       console.log('Next available:', clinic.date);
-      console.log('People waiting:', clinic.waitingPeople);
       console.log('Average wait (days):', clinic.averageWaitDays);
       console.log('Location:', `${clinic.latitude}, ${clinic.longitude}`);
     });
