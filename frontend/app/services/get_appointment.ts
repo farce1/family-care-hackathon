@@ -180,8 +180,8 @@ async function main() {
       console.log('Location:', `${clinic.latitude}, ${clinic.longitude}`);
     });
 
-    // console.log('\n🔍 Raw parsed data:');
-    // console.log(JSON.stringify(results, null, 2));
+    console.log('\n🔍 Raw parsed data:');
+    console.log(JSON.stringify(results, null, 2));
 
   } catch (error) {
     console.error('❌ Test failed:', error);
