@@ -32,7 +32,7 @@ export default function Home() {
             delay={0.3}
             className="text-orange-700/80 text-2xl font-light"
           >
-            Your family's health, all in one heartwarming place
+            Your family&apos;s health, all in one heartwarming place
           </TextAnimate>
         </div>
 
@@ -43,7 +43,7 @@ export default function Home() {
                 <Users className="w-8 h-8 text-orange-600" />
               </div>
               <h3 className="text-lg font-semibold text-orange-900">Family Members</h3>
-              <p className="text-sm text-orange-700/70">Track everyone's health together</p>
+              <p className="text-sm text-orange-700/70">Track everyone&apos;s health together</p>
             </div>
           </Card>
 
