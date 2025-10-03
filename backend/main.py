@@ -1,5 +1,6 @@
 from typing import Optional
 import json
+import os
 from datetime import datetime
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
@@ -8,7 +9,7 @@ import asyncpg
 
 app = FastAPI()
 
-DATABASE_URL = "postgresql://postgres:password@localhost:5432/pdfstore"
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/pdfstore")
 
 async def get_db_connection():
     """Create database connection"""

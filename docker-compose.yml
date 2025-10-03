@@ -25,10 +25,6 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - DATABASE_URL=postgresql://postgres:password@postgres:5432/pdfstore
-      - POSTGRES_HOST=postgres
-      - POSTGRES_DB=pdfstore
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
     restart: unless-stopped
     depends_on:
       postgres:
