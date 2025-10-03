@@ -12,6 +12,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DocumentTimeline } from "@/components/document-timeline";
+import { BookAppointmentDialog } from "@/components/book-appointment-dialog";
+import { UploadMedicalRecordDialog } from "@/components/upload-medical-record-dialog";
 import {
   currentUser,
   currentUserDocuments,
@@ -97,15 +99,23 @@ export default function Home() {
       <div className="relative z-10 p-8 max-w-7xl mx-auto">
         {/* Welcome Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-3">
-            <Heart className="w-10 h-10 text-primary fill-primary animate-pulse" />
-            <h1 className="text-5xl font-bold text-primary font-[family-name:var(--font-quicksand)]">
-              Welcome Back, {currentUser.name.split(" ")[0]}
-            </h1>
+          <div className="flex items-start justify-between gap-4 mb-3">
+            <div className="flex items-center gap-3">
+              <Heart className="w-10 h-10 text-primary fill-primary animate-pulse" />
+              <div>
+                <h1 className="text-5xl font-bold text-primary font-[family-name:var(--font-quicksand)]">
+                  Welcome Back, {currentUser.name.split(" ")[0]}
+                </h1>
+                <p className="text-muted-foreground text-lg mt-2">
+                  Here&apos;s an overview of your health records and appointments
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <BookAppointmentDialog />
+              <UploadMedicalRecordDialog />
+            </div>
           </div>
-          <p className="text-muted-foreground text-lg">
-            Here&apos;s an overview of your health records and appointments
-          </p>
         </div>
 
         {/* User Profile Card */}

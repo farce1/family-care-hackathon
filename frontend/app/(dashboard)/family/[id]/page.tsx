@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/table";
 import { DocumentTimeline } from "@/components/document-timeline";
 import { Particles } from "@/components/ui/particles";
+import { BookAppointmentDialog } from "@/components/book-appointment-dialog";
+import { UploadMedicalRecordDialog } from "@/components/upload-medical-record-dialog";
 import {
   getFamilyMember,
   getDocumentsForMember,
@@ -119,14 +121,20 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
       />
 
       <div className="relative z-10 p-8 max-w-7xl mx-auto">
-        {/* Back Button */}
-        <Link
-          href="/family"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Family Members
-        </Link>
+        {/* Header with Back Button and Action Buttons */}
+        <div className="flex items-center justify-between mb-6">
+          <Link
+            href="/family"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Family Members
+          </Link>
+          <div className="flex items-center gap-3">
+            <BookAppointmentDialog />
+            <UploadMedicalRecordDialog />
+          </div>
+        </div>
 
         {/* Member Header Card */}
         <Card className="mb-8 bg-white/80 backdrop-blur-sm border-border overflow-hidden">
