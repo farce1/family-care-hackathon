@@ -6,9 +6,7 @@ import { z } from "zod"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ShimmerButton } from "@/components/ui/shimmer-button"
 import { TextAnimate } from "@/components/ui/text-animate"
-import { BorderBeam } from "@/components/ui/border-beam"
 import { Particles } from "@/components/ui/particles"
 import { Heart, AlertCircle } from "lucide-react"
 import { FamilyHealthDiagram } from "@/components/family-health-diagram"
@@ -118,14 +116,6 @@ export function LoginForm() {
         </div>
 
         <Card className="relative overflow-hidden bg-white/80 backdrop-blur-xl border-border p-8 shadow-2xl">
-          <BorderBeam
-            size={250}
-            duration={12}
-            delay={0}
-            colorFrom="oklch(0.64 0.08 245)"
-            colorTo="oklch(0.87 0.03 230)"
-          />
-
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-secondary text-sm font-medium">
@@ -193,18 +183,13 @@ export function LoginForm() {
               )}
             </div>
 
-            <ShimmerButton
+            <button
               type="submit"
               disabled={isLoading}
-              className="w-full h-12 text-base font-semibold"
-              shimmerColor="#ffffff"
-              shimmerSize="0.1em"
-              shimmerDuration="2s"
-              borderRadius="12px"
-              background="linear-gradient(135deg, oklch(0.64 0.08 245) 0%, oklch(0.87 0.03 230) 100%)"
+              className="w-full h-12 text-base font-semibold rounded-xl text-white bg-gradient-to-r from-[oklch(0.64_0.08_245)] to-[oklch(0.87_0.03_230)] hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {isLoading ? "Signing in..." : "Sign In with Love 💕"}
-            </ShimmerButton>
+            </button>
           </form>
 
           <div className="mt-6 text-center">
