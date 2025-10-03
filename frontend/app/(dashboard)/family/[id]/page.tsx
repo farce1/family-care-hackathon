@@ -120,9 +120,9 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
         refresh={false}
       />
 
-      <div className="relative z-10 p-8 max-w-7xl mx-auto">
+      <div className="relative z-10 p-4 max-w-7xl mx-auto">
         {/* Header with Back Button and Action Buttons */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-3">
           <Link
             href="/family"
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
@@ -137,7 +137,7 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
         </div>
 
         {/* Member Header Card */}
-        <Card className="mb-8 bg-white/80 backdrop-blur-sm border-border overflow-hidden">
+        <Card className="mb-4 bg-white/80 backdrop-blur-sm border-border overflow-hidden">
           {/* Decorative accent line */}
           <div
             className={`h-2 ${
@@ -147,14 +147,14 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
             }`}
           />
 
-          <CardContent className="p-8">
-            <div className="flex flex-col md:flex-row gap-6 items-start">
+          <CardContent className="p-4">
+            <div className="flex flex-col md:flex-row gap-4 items-start">
               {/* Avatar Section */}
               <div className="flex-shrink-0">
-                <Avatar className="w-32 h-32 ring-4 ring-primary/20">
+                <Avatar className="w-20 h-20 ring-2 ring-primary/20">
                   <AvatarImage src={member.avatar} alt={member.name} />
                   <AvatarFallback
-                    className={`text-4xl font-bold ${
+                    className={`text-xl font-bold ${
                       member.accentColor === "orange"
                         ? "bg-orange-100 text-orange-600"
                         : "bg-amber-100 text-amber-600"
@@ -167,9 +167,9 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
 
               {/* Member Info */}
               <div className="flex-1">
-                <div className="flex items-start justify-between gap-4 mb-4">
+                <div className="flex items-start justify-between gap-4 mb-2">
                   <div>
-                    <h1 className="text-4xl font-bold text-foreground mb-2 font-[family-name:var(--font-quicksand)]">
+                    <h1 className="text-2xl font-bold text-foreground mb-1 font-[family-name:var(--font-quicksand)]">
                       {member.name}
                     </h1>
                     <Badge
@@ -185,30 +185,30 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
                   </div>
 
                   <Heart
-                    className={`w-8 h-8 ${
+                    className={`w-6 h-6 ${
                       member.accentColor === "orange" ? "text-orange-500" : "text-amber-500"
                     } fill-current`}
                   />
                 </div>
 
                 {/* Health Information Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-3">
                   {member.dateOfBirth && (
                     <div
-                      className={`p-4 rounded-lg ${
+                      className={`p-2.5 rounded-lg ${
                         member.accentColor === "orange" ? "bg-orange-50" : "bg-amber-50"
                       }`}
                     >
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-1.5 mb-0.5">
                         <Calendar
-                          className={`w-4 h-4 ${
+                          className={`w-3.5 h-3.5 ${
                             member.accentColor === "orange" ? "text-orange-600" : "text-amber-600"
                           }`}
                         />
                         <span className="text-xs text-muted-foreground">Date of Birth</span>
                       </div>
                       <p
-                        className={`font-semibold ${
+                        className={`text-sm font-semibold ${
                           member.accentColor === "orange" ? "text-orange-700" : "text-amber-700"
                         }`}
                       >
@@ -223,20 +223,20 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
 
                   {member.bloodType && (
                     <div
-                      className={`p-4 rounded-lg ${
+                      className={`p-2.5 rounded-lg ${
                         member.accentColor === "orange" ? "bg-orange-50" : "bg-amber-50"
                       }`}
                     >
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-1.5 mb-0.5">
                         <Droplet
-                          className={`w-4 h-4 ${
+                          className={`w-3.5 h-3.5 ${
                             member.accentColor === "orange" ? "text-orange-600" : "text-amber-600"
                           }`}
                         />
                         <span className="text-xs text-muted-foreground">Blood Type</span>
                       </div>
                       <p
-                        className={`font-semibold ${
+                        className={`text-sm font-semibold ${
                           member.accentColor === "orange" ? "text-orange-700" : "text-amber-700"
                         }`}
                       >
@@ -247,20 +247,20 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
 
                   {member.allergies && member.allergies.length > 0 && (
                     <div
-                      className={`p-4 rounded-lg ${
+                      className={`p-2.5 rounded-lg ${
                         member.accentColor === "orange" ? "bg-orange-50" : "bg-amber-50"
                       }`}
                     >
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-1.5 mb-0.5">
                         <AlertCircle
-                          className={`w-4 h-4 ${
+                          className={`w-3.5 h-3.5 ${
                             member.accentColor === "orange" ? "text-orange-600" : "text-amber-600"
                           }`}
                         />
                         <span className="text-xs text-muted-foreground">Allergies</span>
                       </div>
                       <p
-                        className={`font-semibold ${
+                        className={`text-sm font-semibold ${
                           member.accentColor === "orange" ? "text-orange-700" : "text-amber-700"
                         }`}
                       >
@@ -277,7 +277,7 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
         {/* Tabs Section */}
         <Tabs defaultValue="records" className="w-full">
           <TabsList
-            className={`grid w-full max-w-md grid-cols-2 mb-6 ${
+            className={`grid w-full max-w-md grid-cols-2 mb-3 ${
               member.accentColor === "orange" ? "bg-orange-50" : "bg-amber-50"
             }`}
           >
@@ -307,15 +307,15 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
 
           {/* Health Records Tab Content */}
           <TabsContent value="records" className="mt-0">
-            <div className="mb-6">
+            <div className="mb-3">
               <h2
-                className={`text-2xl font-bold mb-2 font-[family-name:var(--font-quicksand)] ${
+                className={`text-xl font-bold mb-1 font-[family-name:var(--font-quicksand)] ${
                   member.accentColor === "orange" ? "text-orange-600" : "text-amber-600"
                 }`}
               >
                 {member.name}&apos;s Health Records Timeline
               </h2>
-              <p className="text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Complete medical history organized by date
               </p>
             </div>
@@ -326,16 +326,16 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
           {/* Appointments Tab Content */}
           <TabsContent value="appointments" className="mt-0">
             {/* Upcoming Appointments */}
-            <div className="mb-8">
-              <div className="mb-6">
+            <div className="mb-4">
+              <div className="mb-3">
                 <h2
-                  className={`text-2xl font-bold mb-2 font-[family-name:var(--font-quicksand)] ${
+                  className={`text-xl font-bold mb-1 font-[family-name:var(--font-quicksand)] ${
                     member.accentColor === "orange" ? "text-orange-600" : "text-amber-600"
                   }`}
                 >
                   Upcoming Appointments
                 </h2>
-                <p className="text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   {upcomingAppointments.length} scheduled appointment
                   {upcomingAppointments.length !== 1 ? "s" : ""}
                 </p>
@@ -499,7 +499,7 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
                       </Table>
                     </div>
                   ) : (
-                    <div className="p-8 text-center text-muted-foreground">
+                    <div className="p-4 text-center text-sm text-muted-foreground">
                       No upcoming appointments scheduled
                     </div>
                   )}
@@ -509,15 +509,15 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
 
             {/* Appointment History */}
             <div>
-              <div className="mb-6">
+              <div className="mb-3">
                 <h2
-                  className={`text-2xl font-bold mb-2 font-[family-name:var(--font-quicksand)] ${
+                  className={`text-xl font-bold mb-1 font-[family-name:var(--font-quicksand)] ${
                     member.accentColor === "orange" ? "text-orange-600" : "text-amber-600"
                   }`}
                 >
                   Appointment History
                 </h2>
-                <p className="text-muted-foreground">Past and completed appointments</p>
+                <p className="text-sm text-muted-foreground">Past and completed appointments</p>
               </div>
 
               <Card className="bg-white/80 backdrop-blur-sm border-border overflow-hidden">
@@ -678,7 +678,7 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
                       </Table>
                     </div>
                   ) : (
-                    <div className="p-8 text-center text-muted-foreground">
+                    <div className="p-4 text-center text-sm text-muted-foreground">
                       No appointment history available
                     </div>
                   )}
