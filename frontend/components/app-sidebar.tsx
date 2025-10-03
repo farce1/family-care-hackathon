@@ -1,6 +1,6 @@
 "use client"
 
-import { Heart, LayoutDashboard } from "lucide-react"
+import { Heart, LayoutDashboard, Users } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -11,8 +11,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarFooter,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
+import { ProfilePopup } from "@/components/profile-popup"
 
 const items = [
   {
@@ -20,25 +22,30 @@ const items = [
     url: "/",
     icon: LayoutDashboard,
   },
+  {
+    title: "Family",
+    url: "/family",
+    icon: Users,
+  },
 ]
 
 export function AppSidebar() {
   return (
     <Sidebar>
-      <SidebarHeader className="border-b border-orange-200/50 p-4">
+      <SidebarHeader className="border-b border-sidebar-border p-4">
         <Link href="/" className="flex items-center gap-2">
-          <Heart className="w-8 h-8 text-orange-400 fill-orange-400" />
+          <Heart className="w-8 h-8 text-primary fill-primary" />
           <div className="flex flex-col">
-            <span className="text-lg font-bold text-orange-600 font-[family-name:var(--font-quicksand)]">
+            <span className="text-lg font-bold text-primary font-[family-name:var(--font-quicksand)]">
               Family Care
             </span>
-            <span className="text-xs text-orange-500/70">Health Dashboard</span>
+            <span className="text-xs text-secondary">Health Dashboard</span>
           </div>
         </Link>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-orange-700/70">Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-muted-foreground">Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
@@ -55,6 +62,9 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="border-t border-sidebar-border p-3">
+        <ProfilePopup />
+      </SidebarFooter>
     </Sidebar>
   )
 }
