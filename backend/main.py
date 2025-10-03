@@ -4,16 +4,17 @@ from datetime import datetime
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse, Response
-import asyncpg
+# import asyncpg
+import psycopg2
 
 app = FastAPI()
 
 DATABASE_URL = "postgresql://postgres:password@localhost:5432/pdfstore"
 
-async def get_db_connection():
+def get_db_connection():
     """Create database connection"""
     try:
-        conn = await asyncpg.connect(DATABASE_URL)
+        conn = psycopg2.connect(DATABASE_URL)
         return conn
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database connection failed: {str(e)}")
@@ -29,6 +30,7 @@ async def upload_pdf(
 ):
     """Upload PDF file to PostgreSQL database"""
 
+    print("before validate")
     # Validate file type
     if file.content_type != "application/pdf":
         raise HTTPException(
@@ -50,8 +52,13 @@ async def upload_pdf(
     # Reset file pointer
     await file.seek(0)
 
+    print("file_seek succeeded")
+
     try:
-        conn = await get_db_connection()
+        print("attempting connection")
+        print("sync psycopg2 connection")
+        conn = get_db_connection()
+        print("connection succeeded")
 
         # Prepare metadata
         metadata = {
