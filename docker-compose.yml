@@ -23,3 +23,16 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
+
+  postgres:
+    image: postgres:17
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432" 
+    environment:
+      POSTGRES_USER: familycare
+      POSTGRES_PASSWORD: familycare
+  
+volumes:
+  postgres_data:

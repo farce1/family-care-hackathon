@@ -2,17 +2,19 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { LogOut, User, Mail, Phone, Edit2 } from "lucide-react"
+import { LogOut, User, Mail, Phone, Edit2, Calendar, Droplet, AlertCircle, FileText } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { currentUser, currentUserDocuments } from "@/lib/mock-data"
 
 interface UserProfile {
   name: string
@@ -28,10 +30,10 @@ export function ProfilePopup() {
 
   // Mock user data - in a real app, this would come from auth context or API
   const [profile, setProfile] = React.useState<UserProfile>({
-    name: "John Doe",
-    email: "john.doe@example.com",
+    name: "Adam Kowalski",
+    email: "adams.k@example.com",
     phone: "+1 (555) 123-4567",
-    avatarUrl: "https://i.pravatar.cc/120?u=kk@example.com",
+    avatarUrl: "https://i.pravatar.cc/120?img=12",
   })
 
   const [editedProfile, setEditedProfile] = React.useState<UserProfile>(profile)
@@ -83,7 +85,7 @@ export function ProfilePopup() {
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-80 border-orange-200 bg-white shadow-lg"
+        className="w-96 border-orange-200 bg-white shadow-lg"
         align="end"
         side="top"
         sideOffset={8}
@@ -102,7 +104,7 @@ export function ProfilePopup() {
                 <span className="text-sm font-semibold text-orange-900">
                   {profile.name}
                 </span>
-                <span className="text-xs text-orange-600/70">Family Admin</span>
+                <span className="text-xs text-orange-600/70">{currentUser.role}</span>
               </div>
             </div>
             {!isEditing && (
@@ -119,6 +121,16 @@ export function ProfilePopup() {
 
           <Separator className="bg-orange-100" />
 
+          {/* Document Count Badge */}
+          <div className="flex items-center gap-2 p-2 bg-orange-50 rounded-lg">
+            <FileText className="w-4 h-4 text-orange-600" />
+            <span className="text-sm font-semibold text-orange-700">
+              {currentUserDocuments.length} {currentUserDocuments.length === 1 ? "Document" : "Documents"}
+            </span>
+          </div>
+
+          <Separator className="bg-orange-100" />
+
           {/* Profile Information */}
           {!isEditing ? (
             <div className="space-y-3">
@@ -130,6 +142,45 @@ export function ProfilePopup() {
                 <Phone className="h-4 w-4 text-orange-400" />
                 <span className="text-orange-900">{profile.phone}</span>
               </div>
+
+              {/* Health Information */}
+              <Separator className="bg-orange-100 my-2" />
+
+              {currentUser.dateOfBirth && (
+                <div className="flex items-center gap-3 text-sm">
+                  <Calendar className="h-4 w-4 text-orange-400" />
+                  <div className="flex flex-col">
+                    <span className="text-xs text-muted-foreground">Date of Birth</span>
+                    <span className="text-orange-900 font-medium">
+                      {new Date(currentUser.dateOfBirth).toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {currentUser.bloodType && (
+                <div className="flex items-center gap-3 text-sm">
+                  <Droplet className="h-4 w-4 text-orange-400" />
+                  <div className="flex flex-col">
+                    <span className="text-xs text-muted-foreground">Blood Type</span>
+                    <span className="text-orange-900 font-medium">{currentUser.bloodType}</span>
+                  </div>
+                </div>
+              )}
+
+              {currentUser.allergies && currentUser.allergies.length > 0 && (
+                <div className="flex items-center gap-3 text-sm">
+                  <AlertCircle className="h-4 w-4 text-orange-400" />
+                  <div className="flex flex-col">
+                    <span className="text-xs text-muted-foreground">Allergies</span>
+                    <span className="text-orange-900 font-medium">{currentUser.allergies.join(", ")}</span>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             /* Edit Form */

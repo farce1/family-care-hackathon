@@ -102,7 +102,7 @@ export function BookAppointmentDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="flex items-center gap-2 bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white">
+        <Button className="flex items-center gap-2 h-12 px-6 bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white">
           <Plus className="w-5 h-5" />
           Book Next Appointment
         </Button>

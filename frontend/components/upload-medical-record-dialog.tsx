@@ -1,41 +1,444 @@
 "use client"
 
-import { useRef } from "react"
+import { useState, useRef, useCallback } from "react"
+import { useMutation } from "@tanstack/react-query"
+import { z } from "zod"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Upload } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
+import { BorderBeam } from "@/components/ui/border-beam"
+import { ShimmerButton } from "@/components/ui/shimmer-button"
+import {
+  Upload,
+  FileText,
+  X,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
+
+// File validation schema
+const fileSchema = z.object({
+  file: z
+    .instanceof(File)
+    .refine((file) => file.type === "application/pdf", {
+      message: "Only PDF files are allowed",
+    })
+    .refine((file) => file.size <= 10 * 1024 * 1024, {
+      message: "File size must be less than 10MB",
+    }),
+})
+
+// File upload status
+type FileStatus = "pending" | "uploading" | "success" | "error"
+
+interface FileWithStatus {
+  id: string
+  file: File
+  status: FileStatus
+  progress: number
+  error?: string
+}
+
+// Mock upload function - replace with actual API call
+async function uploadFile(file: File, onProgress: (progress: number) => void): Promise<void> {
+  const formData = new FormData()
+  formData.append("file", file)
+
+  // Simulate upload with progress
+  return new Promise((resolve, reject) => {
+    let progress = 0
+    const interval = setInterval(() => {
+      progress += Math.random() * 30
+      if (progress >= 100) {
+        progress = 100
+        clearInterval(interval)
+        onProgress(100)
+
+        // Simulate API call
+        setTimeout(() => {
+          // Randomly succeed or fail for demo purposes
+          if (Math.random() > 0.1) {
+            resolve()
+          } else {
+            reject(new Error("Upload failed"))
+          }
+        }, 300)
+      } else {
+        onProgress(progress)
+      }
+    }, 200)
+  })
+
+  // Actual implementation would be:
+  // const response = await fetch('/api/upload-medical-record', {
+  //   method: 'POST',
+  //   body: formData,
+  // })
+  // if (!response.ok) throw new Error('Upload failed')
+}
 
 export function UploadMedicalRecordDialog() {
+  const [open, setOpen] = useState(false)
+  const [files, setFiles] = useState<FileWithStatus[]>([])
+  const [isDragOver, setIsDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleButtonClick = () => {
-    fileInputRef.current?.click()
+  // Upload mutation
+  const uploadMutation = useMutation({
+    mutationFn: async ({ file, id }: { file: File; id: string }) => {
+      return uploadFile(file, (progress) => {
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === id ? { ...f, progress, status: "uploading" as FileStatus } : f
+          )
+        )
+      })
+    },
+    onSuccess: (_, variables) => {
+      setFiles((prev) =>
+        prev.map((f) =>
+          f.id === variables.id ? { ...f, status: "success" as FileStatus, progress: 100 } : f
+        )
+      )
+    },
+    onError: (error, variables) => {
+      setFiles((prev) =>
+        prev.map((f) =>
+          f.id === variables.id
+            ? {
+                ...f,
+                status: "error" as FileStatus,
+                error: error instanceof Error ? error.message : "Upload failed",
+              }
+            : f
+        )
+      )
+    },
+  })
+
+  const handleFileSelection = useCallback((selectedFiles: FileList | null) => {
+    if (!selectedFiles) return
+
+    const newFiles: FileWithStatus[] = []
+    const errors: string[] = []
+
+    Array.from(selectedFiles).forEach((file) => {
+      const validation = fileSchema.safeParse({ file })
+      if (validation.success) {
+        newFiles.push({
+          id: `${Date.now()}-${Math.random()}`,
+          file,
+          status: "pending",
+          progress: 0,
+        })
+      } else {
+        errors.push(`${file.name}: ${validation.error.errors[0].message}`)
+      }
+    })
+
+    if (errors.length > 0) {
+      alert(`Some files were not added:\n${errors.join("\n")}`)
+    }
+
+    setFiles((prev) => [...prev, ...newFiles])
+  }, [])
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+  }, [])
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      setIsDragOver(false)
+      handleFileSelection(e.dataTransfer.files)
+    },
+    [handleFileSelection]
+  )
+
+  const handleFileInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      handleFileSelection(e.target.files)
+      // Reset input value to allow selecting the same file again
+      e.target.value = ""
+    },
+    [handleFileSelection]
+  )
+
+  const removeFile = useCallback((id: string) => {
+    setFiles((prev) => prev.filter((f) => f.id !== id))
+  }, [])
+
+  const handleUpload = useCallback(async () => {
+    const pendingFiles = files.filter((f) => f.status === "pending")
+
+    // Upload all pending files concurrently
+    await Promise.all(
+      pendingFiles.map((fileItem) =>
+        uploadMutation.mutateAsync({ file: fileItem.file, id: fileItem.id })
+      )
+    )
+  }, [files, uploadMutation])
+
+  const handleClose = useCallback(() => {
+    // Only allow closing if no files are uploading
+    const hasUploading = files.some((f) => f.status === "uploading")
+    if (!hasUploading) {
+      setOpen(false)
+      // Clear files after a short delay to allow animation
+      setTimeout(() => setFiles([]), 300)
+    }
+  }, [files])
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return "0 Bytes"
+    const k = 1024
+    const sizes = ["Bytes", "KB", "MB", "GB"]
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i]
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = e.target.files
-    if (selectedFiles && selectedFiles.length > 0) {
-      console.log("Selected files:", Array.from(selectedFiles).map(f => f.name))
-      // TODO: Handle file upload logic here
+  const getStatusIcon = (status: FileStatus) => {
+    switch (status) {
+      case "pending":
+        return <FileText className="w-5 h-5 text-orange-600" />
+      case "uploading":
+        return <Loader2 className="w-5 h-5 text-orange-600 animate-spin" />
+      case "success":
+        return <CheckCircle2 className="w-5 h-5 text-green-600" />
+      case "error":
+        return <AlertCircle className="w-5 h-5 text-red-600" />
     }
   }
 
+  const pendingCount = files.filter((f) => f.status === "pending").length
+  const uploadingCount = files.filter((f) => f.status === "uploading").length
+  const successCount = files.filter((f) => f.status === "success").length
+  const errorCount = files.filter((f) => f.status === "error").length
+
   return (
-    <>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="application/pdf"
-        multiple
-        onChange={handleFileChange}
-        className="hidden"
-      />
-      <Button
-        onClick={handleButtonClick}
-        className="flex items-center gap-2 bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white"
-      >
-        <Upload className="w-5 h-5" />
-        Upload Medical Record
-      </Button>
-    </>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <ShimmerButton
+          shimmerColor="#ffffff"
+          shimmerSize="0.1em"
+          borderRadius="0.75rem"
+          shimmerDuration="2s"
+          background="linear-gradient(to right, oklch(0.64 0.08 245), oklch(0.70 0.08 245))"
+          className="flex items-center gap-2 px-6 py-3 text-base font-semibold h-12"
+        >
+          <Upload className="w-5 h-5" />
+          Upload Records
+        </ShimmerButton>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold text-primary font-[family-name:var(--font-quicksand)]">
+            Upload Medical Records
+          </DialogTitle>
+          <DialogDescription>
+            Upload PDF files of your medical records. You can select multiple files at once.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto space-y-4 mt-4">
+          {/* Drag and Drop Zone */}
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={cn(
+              "relative border-2 border-dashed rounded-xl p-8 transition-all duration-200",
+              isDragOver
+                ? "border-orange-500 bg-orange-50"
+                : "border-border bg-orange-50/30 hover:bg-orange-50/50"
+            )}
+          >
+            {isDragOver && <BorderBeam size={100} duration={3} colorFrom="#fb923c" colorTo="#f97316" />}
+
+            <div className="flex flex-col items-center justify-center gap-3 text-center">
+              <div className="p-4 bg-orange-100 rounded-full">
+                <Upload className="w-8 h-8 text-orange-600" />
+              </div>
+              <div>
+                <p className="text-base font-semibold text-foreground mb-1">
+                  Drag & drop PDF files here
+                </p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  or click to browse (max 10MB per file)
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="bg-white hover:bg-orange-50 border-orange-200 text-orange-700 rounded-xl"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Select Files
+                </Button>
+              </div>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf"
+              multiple
+              onChange={handleFileInputChange}
+              className="hidden"
+            />
+          </div>
+
+          {/* File List */}
+          {files.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-foreground">
+                  Selected Files ({files.length})
+                </h3>
+                {successCount > 0 && (
+                  <span className="text-xs text-green-600 font-medium">
+                    {successCount} uploaded successfully
+                  </span>
+                )}
+              </div>
+
+              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                {files.map((fileItem) => (
+                  <div
+                    key={fileItem.id}
+                    className={cn(
+                      "relative p-4 bg-white border rounded-xl transition-all",
+                      fileItem.status === "success" && "border-green-200 bg-green-50/30",
+                      fileItem.status === "error" && "border-red-200 bg-red-50/30",
+                      fileItem.status === "uploading" && "border-orange-200 bg-orange-50/30",
+                      fileItem.status === "pending" && "border-border"
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        {getStatusIcon(fileItem.status)}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">
+                              {fileItem.file.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {formatFileSize(fileItem.file.size)}
+                            </p>
+                          </div>
+
+                          {fileItem.status !== "uploading" && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={() => removeFile(fileItem.id)}
+                              className="flex-shrink-0 text-muted-foreground hover:text-destructive"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+
+                        {/* Progress Bar */}
+                        {fileItem.status === "uploading" && (
+                          <div className="mt-2 space-y-1">
+                            <Progress value={fileItem.progress} className="h-1.5" />
+                            <p className="text-xs text-muted-foreground">
+                              Uploading... {Math.round(fileItem.progress)}%
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Error Message */}
+                        {fileItem.status === "error" && fileItem.error && (
+                          <p className="text-xs text-red-600 mt-2">{fileItem.error}</p>
+                        )}
+
+                        {/* Success Message */}
+                        {fileItem.status === "success" && (
+                          <p className="text-xs text-green-600 mt-2 font-medium">
+                            Upload complete
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer Actions */}
+        <div className="flex items-center justify-between gap-3 pt-4 border-t">
+          <div className="text-sm text-muted-foreground">
+            {uploadingCount > 0 && (
+              <span className="text-orange-600 font-medium">
+                Uploading {uploadingCount} file{uploadingCount !== 1 ? "s" : ""}...
+              </span>
+            )}
+            {errorCount > 0 && uploadingCount === 0 && (
+              <span className="text-red-600 font-medium">
+                {errorCount} file{errorCount !== 1 ? "s" : ""} failed
+              </span>
+            )}
+          </div>
+
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={uploadingCount > 0}
+              className="rounded-xl"
+            >
+              {successCount > 0 && pendingCount === 0 && uploadingCount === 0
+                ? "Close"
+                : "Cancel"}
+            </Button>
+
+            {pendingCount > 0 && (
+              <Button
+                type="button"
+                onClick={handleUpload}
+                disabled={uploadingCount > 0}
+                className="rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white"
+              >
+                {uploadingCount > 0 ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload {pendingCount} File{pendingCount !== 1 ? "s" : ""}
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
