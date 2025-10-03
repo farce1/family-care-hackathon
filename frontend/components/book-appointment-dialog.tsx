@@ -21,7 +21,6 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { ShimmerButton } from "@/components/ui/shimmer-button"
 import { CalendarIcon, AlertCircle, Plus } from "lucide-react"
 import { format } from "date-fns"
 import { AppointmentType } from "@/types/appointment"
@@ -103,17 +102,10 @@ export function BookAppointmentDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <ShimmerButton
-          className="flex items-center gap-2"
-          shimmerColor="#ffffff"
-          shimmerSize="0.1em"
-          shimmerDuration="2s"
-          borderRadius="12px"
-          background="linear-gradient(135deg, oklch(0.64 0.08 245) 0%, oklch(0.87 0.03 230) 100%)"
-        >
+        <Button className="flex items-center gap-2 bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white">
           <Plus className="w-5 h-5" />
           Book Next Appointment
-        </ShimmerButton>
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
@@ -257,18 +249,13 @@ export function BookAppointmentDialog() {
             >
               Cancel
             </Button>
-            <ShimmerButton
+            <Button
               type="submit"
               disabled={isLoading}
-              className="flex-1"
-              shimmerColor="#ffffff"
-              shimmerSize="0.1em"
-              shimmerDuration="2s"
-              borderRadius="12px"
-              background="linear-gradient(135deg, oklch(0.64 0.08 245) 0%, oklch(0.87 0.03 230) 100%)"
+              className="flex-1 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white"
             >
               {isLoading ? "Booking..." : "Book Appointment"}
-            </ShimmerButton>
+            </Button>
           </div>
         </form>
       </DialogContent>

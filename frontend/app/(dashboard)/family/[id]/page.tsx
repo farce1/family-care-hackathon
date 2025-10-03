@@ -1,10 +1,37 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { DocumentTimeline } from "@/components/document-timeline";
 import { Particles } from "@/components/ui/particles";
-import { getFamilyMember, getDocumentsForMember } from "@/lib/mock-data";
-import { Heart, Calendar, Droplet, AlertCircle, ArrowLeft } from "lucide-react";
+import { BookAppointmentDialog } from "@/components/book-appointment-dialog";
+import { UploadMedicalRecordDialog } from "@/components/upload-medical-record-dialog";
+import {
+  getFamilyMember,
+  getDocumentsForMember,
+  getAppointmentsForMember,
+} from "@/lib/mock-data";
+import {
+  Heart,
+  Calendar,
+  Droplet,
+  AlertCircle,
+  ArrowLeft,
+  Clock,
+  MapPin,
+  FileText,
+  User,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
@@ -12,6 +39,54 @@ interface FamilyMemberPageProps {
   params: Promise<{
     id: string;
   }>;
+}
+
+// Format date for display
+function formatAppointmentDate(date: Date): string {
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+// Format time for display
+function formatAppointmentTime(date: Date): string {
+  return new Date(date).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+// Get status badge styling and icon
+function getStatusDisplay(status: string) {
+  switch (status) {
+    case "upcoming":
+      return {
+        className: "bg-orange-100 text-orange-700 border-orange-200",
+        icon: <Clock className="w-3 h-3" />,
+        label: "Upcoming",
+      };
+    case "completed":
+      return {
+        className: "bg-green-100 text-green-700 border-green-200",
+        icon: <CheckCircle2 className="w-3 h-3" />,
+        label: "Completed",
+      };
+    case "cancelled":
+      return {
+        className: "bg-gray-100 text-gray-700 border-gray-200",
+        icon: <XCircle className="w-3 h-3" />,
+        label: "Cancelled",
+      };
+    default:
+      return {
+        className: "bg-orange-100 text-orange-700 border-orange-200",
+        icon: <Clock className="w-3 h-3" />,
+        label: status,
+      };
+  }
 }
 
 /**
@@ -27,6 +102,13 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
   }
 
   const documents = getDocumentsForMember(resolvedParams.id);
+  const appointments = getAppointmentsForMember(resolvedParams.id);
+
+  // Split appointments into upcoming and history
+  const upcomingAppointments = appointments.filter((apt) => apt.status === "upcoming");
+  const archivalAppointments = appointments.filter(
+    (apt) => apt.status === "completed" || apt.status === "cancelled"
+  );
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-background via-background to-background/90 overflow-hidden">
@@ -39,14 +121,20 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
       />
 
       <div className="relative z-10 p-8 max-w-7xl mx-auto">
-        {/* Back Button */}
-        <Link
-          href="/family"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Family Members
-        </Link>
+        {/* Header with Back Button and Action Buttons */}
+        <div className="flex items-center justify-between mb-6">
+          <Link
+            href="/family"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Family Members
+          </Link>
+          <div className="flex items-center gap-3">
+            <BookAppointmentDialog />
+            <UploadMedicalRecordDialog />
+          </div>
+        </div>
 
         {/* Member Header Card */}
         <Card className="mb-8 bg-white/80 backdrop-blur-sm border-border overflow-hidden">
@@ -186,21 +274,419 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
           </CardContent>
         </Card>
 
-        {/* Document Timeline Section */}
-        <div className="mb-6">
-          <h2
-            className={`text-2xl font-bold mb-2 font-[family-name:var(--font-quicksand)] ${
-              member.accentColor === "orange" ? "text-orange-600" : "text-amber-600"
+        {/* Tabs Section */}
+        <Tabs defaultValue="records" className="w-full">
+          <TabsList
+            className={`grid w-full max-w-md grid-cols-2 mb-6 ${
+              member.accentColor === "orange" ? "bg-orange-50" : "bg-amber-50"
             }`}
           >
-            Health Records Timeline
-          </h2>
-          <p className="text-muted-foreground">
-            All medical documents and health records for {member.name}
-          </p>
-        </div>
+            <TabsTrigger
+              value="records"
+              className={`${
+                member.accentColor === "orange"
+                  ? "data-[state=active]:bg-orange-400 data-[state=active]:text-white"
+                  : "data-[state=active]:bg-amber-400 data-[state=active]:text-white"
+              }`}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Health Records
+            </TabsTrigger>
+            <TabsTrigger
+              value="appointments"
+              className={`${
+                member.accentColor === "orange"
+                  ? "data-[state=active]:bg-orange-400 data-[state=active]:text-white"
+                  : "data-[state=active]:bg-amber-400 data-[state=active]:text-white"
+              }`}
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              Appointments
+            </TabsTrigger>
+          </TabsList>
 
-        <DocumentTimeline documents={documents} accentColor={member.accentColor} />
+          {/* Health Records Tab Content */}
+          <TabsContent value="records" className="mt-0">
+            <div className="mb-6">
+              <h2
+                className={`text-2xl font-bold mb-2 font-[family-name:var(--font-quicksand)] ${
+                  member.accentColor === "orange" ? "text-orange-600" : "text-amber-600"
+                }`}
+              >
+                {member.name}&apos;s Health Records Timeline
+              </h2>
+              <p className="text-muted-foreground">
+                Complete medical history organized by date
+              </p>
+            </div>
+
+            <DocumentTimeline documents={documents} accentColor={member.accentColor} />
+          </TabsContent>
+
+          {/* Appointments Tab Content */}
+          <TabsContent value="appointments" className="mt-0">
+            {/* Upcoming Appointments */}
+            <div className="mb-8">
+              <div className="mb-6">
+                <h2
+                  className={`text-2xl font-bold mb-2 font-[family-name:var(--font-quicksand)] ${
+                    member.accentColor === "orange" ? "text-orange-600" : "text-amber-600"
+                  }`}
+                >
+                  Upcoming Appointments
+                </h2>
+                <p className="text-muted-foreground">
+                  {upcomingAppointments.length} scheduled appointment
+                  {upcomingAppointments.length !== 1 ? "s" : ""}
+                </p>
+              </div>
+
+              <Card className="bg-white/80 backdrop-blur-sm border-border overflow-hidden">
+                <div
+                  className={`h-2 ${
+                    member.accentColor === "orange"
+                      ? "bg-gradient-to-r from-orange-400 to-orange-500"
+                      : "bg-gradient-to-r from-amber-400 to-amber-500"
+                  }`}
+                />
+                <CardContent className="p-0">
+                  {upcomingAppointments.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow
+                            className={`${
+                              member.accentColor === "orange" ? "bg-orange-50/50" : "bg-amber-50/50"
+                            }`}
+                          >
+                            <TableHead
+                              className={`font-semibold ${
+                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                              }`}
+                            >
+                              Date
+                            </TableHead>
+                            <TableHead
+                              className={`font-semibold ${
+                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                              }`}
+                            >
+                              Time
+                            </TableHead>
+                            <TableHead
+                              className={`font-semibold ${
+                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                              }`}
+                            >
+                              Doctor/Provider
+                            </TableHead>
+                            <TableHead
+                              className={`font-semibold ${
+                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                              }`}
+                            >
+                              Type
+                            </TableHead>
+                            <TableHead
+                              className={`font-semibold ${
+                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                              }`}
+                            >
+                              Location
+                            </TableHead>
+                            <TableHead
+                              className={`font-semibold ${
+                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                              }`}
+                            >
+                              Status
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {upcomingAppointments.map((appointment) => {
+                            const statusDisplay = getStatusDisplay(appointment.status);
+                            return (
+                              <TableRow
+                                key={appointment.id}
+                                className={`${
+                                  member.accentColor === "orange"
+                                    ? "hover:bg-orange-50/30"
+                                    : "hover:bg-amber-50/30"
+                                } transition-colors`}
+                              >
+                                <TableCell className="font-medium">
+                                  <div className="flex items-center gap-2">
+                                    <Calendar
+                                      className={`w-4 h-4 ${
+                                        member.accentColor === "orange"
+                                          ? "text-orange-600"
+                                          : "text-amber-600"
+                                      }`}
+                                    />
+                                    {formatAppointmentDate(appointment.dateTime)}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <Clock
+                                      className={`w-4 h-4 ${
+                                        member.accentColor === "orange"
+                                          ? "text-orange-600"
+                                          : "text-amber-600"
+                                      }`}
+                                    />
+                                    {formatAppointmentTime(appointment.dateTime)}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <User
+                                      className={`w-4 h-4 ${
+                                        member.accentColor === "orange"
+                                          ? "text-orange-600"
+                                          : "text-amber-600"
+                                      }`}
+                                    />
+                                    <div>
+                                      <div className="font-medium">{appointment.doctorName}</div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {appointment.facilityName}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge
+                                    variant="secondary"
+                                    className={`${
+                                      member.accentColor === "orange"
+                                        ? "bg-amber-100 text-amber-700 border-amber-200"
+                                        : "bg-orange-100 text-orange-700 border-orange-200"
+                                    }`}
+                                  >
+                                    {appointment.appointmentType}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  {appointment.facilityAddress && (
+                                    <div className="flex items-start gap-2 max-w-xs">
+                                      <MapPin
+                                        className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
+                                          member.accentColor === "orange"
+                                            ? "text-orange-600"
+                                            : "text-amber-600"
+                                        }`}
+                                      />
+                                      <span className="text-sm text-muted-foreground">
+                                        {appointment.facilityAddress}
+                                      </span>
+                                    </div>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant="secondary" className={statusDisplay.className}>
+                                    <span className="flex items-center gap-1">
+                                      {statusDisplay.icon}
+                                      {statusDisplay.label}
+                                    </span>
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center text-muted-foreground">
+                      No upcoming appointments scheduled
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Appointment History */}
+            <div>
+              <div className="mb-6">
+                <h2
+                  className={`text-2xl font-bold mb-2 font-[family-name:var(--font-quicksand)] ${
+                    member.accentColor === "orange" ? "text-orange-600" : "text-amber-600"
+                  }`}
+                >
+                  Appointment History
+                </h2>
+                <p className="text-muted-foreground">Past and completed appointments</p>
+              </div>
+
+              <Card className="bg-white/80 backdrop-blur-sm border-border overflow-hidden">
+                <div
+                  className={`h-2 ${
+                    member.accentColor === "orange"
+                      ? "bg-gradient-to-r from-orange-400 to-orange-500"
+                      : "bg-gradient-to-r from-amber-400 to-amber-500"
+                  }`}
+                />
+                <CardContent className="p-0">
+                  {archivalAppointments.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow
+                            className={`${
+                              member.accentColor === "orange" ? "bg-orange-50/50" : "bg-amber-50/50"
+                            }`}
+                          >
+                            <TableHead
+                              className={`font-semibold ${
+                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                              }`}
+                            >
+                              Date
+                            </TableHead>
+                            <TableHead
+                              className={`font-semibold ${
+                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                              }`}
+                            >
+                              Time
+                            </TableHead>
+                            <TableHead
+                              className={`font-semibold ${
+                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                              }`}
+                            >
+                              Doctor/Provider
+                            </TableHead>
+                            <TableHead
+                              className={`font-semibold ${
+                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                              }`}
+                            >
+                              Type
+                            </TableHead>
+                            <TableHead
+                              className={`font-semibold ${
+                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                              }`}
+                            >
+                              Location
+                            </TableHead>
+                            <TableHead
+                              className={`font-semibold ${
+                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                              }`}
+                            >
+                              Status
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {archivalAppointments.map((appointment) => {
+                            const statusDisplay = getStatusDisplay(appointment.status);
+                            return (
+                              <TableRow
+                                key={appointment.id}
+                                className={`${
+                                  member.accentColor === "orange"
+                                    ? "hover:bg-orange-50/30"
+                                    : "hover:bg-amber-50/30"
+                                } transition-colors`}
+                              >
+                                <TableCell className="font-medium">
+                                  <div className="flex items-center gap-2">
+                                    <Calendar
+                                      className={`w-4 h-4 ${
+                                        member.accentColor === "orange"
+                                          ? "text-orange-600"
+                                          : "text-amber-600"
+                                      }`}
+                                    />
+                                    {formatAppointmentDate(appointment.dateTime)}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <Clock
+                                      className={`w-4 h-4 ${
+                                        member.accentColor === "orange"
+                                          ? "text-orange-600"
+                                          : "text-amber-600"
+                                      }`}
+                                    />
+                                    {formatAppointmentTime(appointment.dateTime)}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <User
+                                      className={`w-4 h-4 ${
+                                        member.accentColor === "orange"
+                                          ? "text-orange-600"
+                                          : "text-amber-600"
+                                      }`}
+                                    />
+                                    <div>
+                                      <div className="font-medium">{appointment.doctorName}</div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {appointment.facilityName}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge
+                                    variant="secondary"
+                                    className={`${
+                                      member.accentColor === "orange"
+                                        ? "bg-amber-100 text-amber-700 border-amber-200"
+                                        : "bg-orange-100 text-orange-700 border-orange-200"
+                                    }`}
+                                  >
+                                    {appointment.appointmentType}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  {appointment.facilityAddress && (
+                                    <div className="flex items-start gap-2 max-w-xs">
+                                      <MapPin
+                                        className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
+                                          member.accentColor === "orange"
+                                            ? "text-orange-600"
+                                            : "text-amber-600"
+                                        }`}
+                                      />
+                                      <span className="text-sm text-muted-foreground">
+                                        {appointment.facilityAddress}
+                                      </span>
+                                    </div>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant="secondary" className={statusDisplay.className}>
+                                    <span className="flex items-center gap-1">
+                                      {statusDisplay.icon}
+                                      {statusDisplay.label}
+                                    </span>
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center text-muted-foreground">
+                      No appointment history available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

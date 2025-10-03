@@ -52,7 +52,7 @@ const familyMembers: FamilyMember[] = [
   {
     id: "4",
     name: "Maniek",
-    role: "Dog (Maltese)",
+    role: "Dog",
     avatar: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=120&h=120&fit=crop",
     initials: "MN",
     documentsCount: 8,
@@ -83,7 +83,7 @@ export default function FamilyPage() {
           {familyMembers.map((member, index) => (
             <Link key={member.id} href={`/family/${member.id}`}>
               <Card
-                className="group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-border bg-white/80 backdrop-blur-sm overflow-hidden relative cursor-pointer"
+                className="group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-border bg-white/80 backdrop-blur-sm overflow-hidden relative cursor-pointer h-full flex flex-col"
                 style={{
                   animationDelay: `${index * 100}ms`,
                 }}
@@ -132,46 +132,9 @@ export default function FamilyPage() {
                 </div>
               </CardHeader>
 
-              <CardContent className="space-y-4">
-                {/* Documents Count */}
-                <div
-                  className={`flex items-center gap-3 p-3 rounded-lg ${
-                    member.accentColor === "orange"
-                      ? "bg-primary/5"
-                      : "bg-secondary/5"
-                  }`}
-                >
-                  <div
-                    className={`p-2 rounded-md ${
-                      member.accentColor === "orange"
-                        ? "bg-primary/10"
-                        : "bg-secondary/10"
-                    }`}
-                  >
-                    <FileText
-                      className={`w-4 h-4 ${
-                        member.accentColor === "orange"
-                          ? "text-primary"
-                          : "text-secondary"
-                      }`}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-muted-foreground">Documents</p>
-                    <p
-                      className={`font-semibold ${
-                        member.accentColor === "orange"
-                          ? "text-primary"
-                          : "text-secondary"
-                      }`}
-                    >
-                      {member.documentsCount} uploaded
-                    </p>
-                  </div>
-                </div>
-
-                {/* Appointment Date */}
-                {member.appointmentDate && (
+              <CardContent className="space-y-4 flex-1 flex flex-col">
+                <div className="space-y-4 flex-1">
+                  {/* Documents Count */}
                   <div
                     className={`flex items-center gap-3 p-3 rounded-lg ${
                       member.accentColor === "orange"
@@ -186,7 +149,7 @@ export default function FamilyPage() {
                           : "bg-secondary/10"
                       }`}
                     >
-                      <Calendar
+                      <FileText
                         className={`w-4 h-4 ${
                           member.accentColor === "orange"
                             ? "text-primary"
@@ -195,7 +158,7 @@ export default function FamilyPage() {
                       />
                     </div>
                     <div className="flex-1">
-                      <p className="text-xs text-muted-foreground">Next Appointment</p>
+                      <p className="text-xs text-muted-foreground">Documents</p>
                       <p
                         className={`font-semibold ${
                           member.accentColor === "orange"
@@ -203,53 +166,100 @@ export default function FamilyPage() {
                             : "text-secondary"
                         }`}
                       >
-                        {member.appointmentDate}
+                        {member.documentsCount} uploaded
                       </p>
                     </div>
                   </div>
-                )}
 
-                {/* Facility Visit */}
-                {member.facilityVisit && (
+                  {/* Appointment Date */}
                   <div
-                    className={`flex items-center gap-3 p-3 rounded-lg ${
+                    className={`flex items-center gap-3 p-3 rounded-lg min-h-[68px] ${
                       member.accentColor === "orange"
                         ? "bg-primary/5"
                         : "bg-secondary/5"
                     }`}
                   >
-                    <div
-                      className={`p-2 rounded-md ${
-                        member.accentColor === "orange"
-                          ? "bg-primary/10"
-                          : "bg-secondary/10"
-                      }`}
-                    >
-                      <Building2
-                        className={`w-4 h-4 ${
-                          member.accentColor === "orange"
-                            ? "text-primary"
-                            : "text-secondary"
-                        }`}
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs text-muted-foreground">Facility Visit</p>
-                      <p
-                        className={`font-semibold text-sm ${
-                          member.accentColor === "orange"
-                            ? "text-primary"
-                            : "text-secondary"
-                        }`}
-                      >
-                        {member.facilityVisit}
-                      </p>
-                    </div>
+                    {member.appointmentDate ? (
+                      <>
+                        <div
+                          className={`p-2 rounded-md ${
+                            member.accentColor === "orange"
+                              ? "bg-primary/10"
+                              : "bg-secondary/10"
+                          }`}
+                        >
+                          <Calendar
+                            className={`w-4 h-4 ${
+                              member.accentColor === "orange"
+                                ? "text-primary"
+                                : "text-secondary"
+                            }`}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-muted-foreground">Next Appointment</p>
+                          <p
+                            className={`font-semibold ${
+                              member.accentColor === "orange"
+                                ? "text-primary"
+                                : "text-secondary"
+                            }`}
+                          >
+                            {member.appointmentDate}
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex-1" />
+                    )}
                   </div>
-                )}
+
+                  {/* Facility Visit */}
+                  <div
+                    className={`flex items-center gap-3 p-3 rounded-lg min-h-[68px] ${
+                      member.accentColor === "orange"
+                        ? "bg-primary/5"
+                        : "bg-secondary/5"
+                    }`}
+                  >
+                    {member.facilityVisit ? (
+                      <>
+                        <div
+                          className={`p-2 rounded-md ${
+                            member.accentColor === "orange"
+                              ? "bg-primary/10"
+                              : "bg-secondary/10"
+                          }`}
+                        >
+                          <Building2
+                            className={`w-4 h-4 ${
+                              member.accentColor === "orange"
+                                ? "text-primary"
+                                : "text-secondary"
+                            }`}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-muted-foreground">Facility Visit</p>
+                          <p
+                            className={`font-semibold text-sm ${
+                              member.accentColor === "orange"
+                                ? "text-primary"
+                                : "text-secondary"
+                            }`}
+                          >
+                            {member.facilityVisit}
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex-1" />
+                    )}
+                  </div>
+                </div>
 
                 {/* View Details Button */}
-                <div className="mt-4 pt-4 border-t border-border">
+                <div className="mt-auto pt-4 border-t border-border">
                   <div
                     className={`flex items-center justify-center gap-2 text-sm font-medium transition-colors ${
                       member.accentColor === "orange"
