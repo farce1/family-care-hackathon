@@ -3,19 +3,27 @@ import json
 import os
 from datetime import datetime
 
+from pydantic import BaseModel
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse, Response
-# import asyncpg
-import psycopg2
+import asyncpg
+from uuid import uuid4, UUID
 
 app = FastAPI()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/pdfstore")
 
-def get_db_connection():
+class PDFResponse(BaseModel):
+    id: UUID
+    filename: str
+    file_size: int
+    file_data: bytes
+
+
+async def get_db_connection():
     """Create database connection"""
     try:
-        conn = psycopg2.connect(DATABASE_URL)
+        conn = await asyncpg.connect(DATABASE_URL)
         return conn
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database connection failed: {str(e)}")
@@ -24,14 +32,12 @@ def get_db_connection():
 async def hello():
     return {"message": "world"}
 
-@app.post("/upload-pdf/")
+@app.post("/upload-pdf/", response_model=PDFResponse)
 async def upload_pdf(
         file: UploadFile = File(...),
-        description: Optional[str] = None
 ):
     """Upload PDF file to PostgreSQL database"""
 
-    print("before validate")
     # Validate file type
     if file.content_type != "application/pdf":
         raise HTTPException(
@@ -53,45 +59,29 @@ async def upload_pdf(
     # Reset file pointer
     await file.seek(0)
 
-    print("file_seek succeeded")
-
     try:
-        print("attempting connection")
-        print("sync psycopg2 connection")
-        conn = get_db_connection()
-        print("connection succeeded")
+        conn = await get_db_connection()
 
-        # Prepare metadata
-        metadata = {
-            "description": description,
-            "original_filename": file.filename,
-            "upload_timestamp": datetime.utcnow().isoformat()
-        }
+        pdf_id = uuid4()
 
-        # Insert PDF into database
-        query = """
-                INSERT INTO pdf_files (filename, content_type, file_size, file_data, metadata)
-                VALUES ($1, $2, $3, $4, $5) RETURNING id, uploaded_at \
-                """
-
+        # Insert PDF with user association
         result = await conn.fetchrow(
-            query,
+            """
+            INSERT INTO pdfs (id, filename, file_size, file_data)
+            VALUES ($1, $2, $3, $4) RETURNING id
+            """,
+            pdf_id,
             file.filename,
-            file.content_type,
             file_size,
-            content,
-            json.dumps(metadata)
+            content,  # asyncpg handles binary data automatically
         )
 
-        await conn.close()
-
-        return JSONResponse({
-            "message": "PDF uploaded successfully",
-            "file_id": result["id"],
-            "filename": file.filename,
-            "size": file_size,
-            "uploaded_at": result["uploaded_at"].isoformat()
-        })
+        return PDFResponse(
+            id=pdf_id,
+            filename=file.filename,
+            file_size=file_size,
+            file_data=content,
+        )
 
     except Exception as e:
         if 'conn' in locals():
@@ -107,7 +97,9 @@ async def get_pdf(file_id: int):
     """Retrieve PDF file from database"""
 
     try:
+        print("trying connection")
         conn = await get_db_connection()
+        print("connected")
 
         query = """
                 SELECT filename, content_type, file_data, file_size, metadata
