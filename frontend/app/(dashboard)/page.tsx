@@ -1,83 +1,131 @@
-import { TextAnimate } from "@/components/ui/text-animate"
-import { Particles } from "@/components/ui/particles"
-import { Heart, Users, Activity, Calendar } from "lucide-react"
-import { Card } from "@/components/ui/card"
+import { Particles } from "@/components/ui/particles";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { DocumentTimeline } from "@/components/document-timeline";
+import { currentUser, currentUserDocuments } from "@/lib/mock-data";
+import { Heart, Calendar, Droplet, AlertCircle, FileText } from "lucide-react";
 
 export default function Home() {
+  const documentCount = currentUserDocuments.length;
+
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-background/90 overflow-hidden p-8">
+    <div className="relative min-h-screen bg-gradient-to-br from-background via-background to-background/90 overflow-hidden">
       <Particles
         className="absolute inset-0"
-        quantity={80}
+        quantity={60}
         ease={70}
         color="oklch(0.64 0.08 245)"
         refresh={false}
       />
 
-      <div className="relative z-10 max-w-6xl w-full">
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <Heart className="w-16 h-16 text-primary fill-primary animate-pulse" />
-            <TextAnimate
-              animation="blurIn"
-              by="word"
-              className="text-7xl font-bold text-primary font-[family-name:var(--font-quicksand)]"
-            >
-              Welcome Home
-            </TextAnimate>
+      <div className="relative z-10 p-8 max-w-7xl mx-auto">
+        {/* Welcome Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-3">
+            <Heart className="w-10 h-10 text-primary fill-primary animate-pulse" />
+            <h1 className="text-5xl font-bold text-primary font-[family-name:var(--font-quicksand)]">
+              Welcome Back, {currentUser.name.split(" ")[0]}
+            </h1>
           </div>
-          <TextAnimate
-            animation="slideUp"
-            by="word"
-            delay={0.3}
-            className="text-secondary text-2xl font-light"
-          >
-            Your family's health, all in one heartwarming place
-          </TextAnimate>
+          <p className="text-muted-foreground text-lg">
+            Here&apos;s an overview of your health records and documents
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="p-6 bg-white/80 backdrop-blur-sm border-border hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-            <div className="flex flex-col items-center text-center space-y-3">
-              <div className="p-4 bg-primary/10 rounded-full">
-                <Users className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold text-primary">Family Members</h3>
-              <p className="text-sm text-muted-foreground">Track everyone's health together</p>
-            </div>
-          </Card>
+        {/* User Profile Card */}
+        <Card className="mb-8 bg-white/80 backdrop-blur-sm border-border overflow-hidden">
+          {/* Decorative accent line */}
+          <div className="h-2 bg-gradient-to-r from-orange-400 to-orange-500" />
 
-          <Card className="p-6 bg-white/80 backdrop-blur-sm border-border hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-            <div className="flex flex-col items-center text-center space-y-3">
-              <div className="p-4 bg-secondary/10 rounded-full">
-                <Activity className="w-8 h-8 text-secondary" />
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row gap-6 items-start">
+              {/* Avatar Section */}
+              <div className="flex-shrink-0">
+                <Avatar className="w-24 h-24 ring-4 ring-primary/20">
+                  <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
+                  <AvatarFallback className="text-3xl font-bold bg-orange-100 text-orange-600">
+                    {currentUser.initials}
+                  </AvatarFallback>
+                </Avatar>
               </div>
-              <h3 className="text-lg font-semibold text-secondary">Health Stats</h3>
-              <p className="text-sm text-muted-foreground">Monitor vital health metrics</p>
-            </div>
-          </Card>
 
-          <Card className="p-6 bg-white/80 backdrop-blur-sm border-border hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-            <div className="flex flex-col items-center text-center space-y-3">
-              <div className="p-4 bg-accent/10 rounded-full">
-                <Calendar className="w-8 h-8 text-accent" />
-              </div>
-              <h3 className="text-lg font-semibold text-accent">Appointments</h3>
-              <p className="text-sm text-muted-foreground">Never miss a checkup</p>
-            </div>
-          </Card>
+              {/* User Info */}
+              <div className="flex-1">
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div>
+                    <h2 className="text-3xl font-bold text-foreground mb-2 font-[family-name:var(--font-quicksand)]">
+                      {currentUser.name}
+                    </h2>
+                    <Badge variant="secondary" className="bg-orange-100 text-orange-700 border-orange-200">
+                      {currentUser.role}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <FileText className="w-4 h-4 text-orange-600" />
+                    <span className="font-semibold text-orange-600">
+                      {documentCount} {documentCount === 1 ? "Document" : "Documents"}
+                    </span>
+                  </div>
+                </div>
 
-          <Card className="p-6 bg-white/80 backdrop-blur-sm border-border hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-            <div className="flex flex-col items-center text-center space-y-3">
-              <div className="p-4 bg-primary/20 rounded-full">
-                <Heart className="w-8 h-8 text-primary" />
+                {/* Health Information Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                  {currentUser.dateOfBirth && (
+                    <div className="p-4 rounded-lg bg-orange-50">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Calendar className="w-4 h-4 text-orange-600" />
+                        <span className="text-xs text-muted-foreground">Date of Birth</span>
+                      </div>
+                      <p className="font-semibold text-orange-700">
+                        {new Date(currentUser.dateOfBirth).toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  )}
+
+                  {currentUser.bloodType && (
+                    <div className="p-4 rounded-lg bg-orange-50">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Droplet className="w-4 h-4 text-orange-600" />
+                        <span className="text-xs text-muted-foreground">Blood Type</span>
+                      </div>
+                      <p className="font-semibold text-orange-700">{currentUser.bloodType}</p>
+                    </div>
+                  )}
+
+                  {currentUser.allergies && currentUser.allergies.length > 0 && (
+                    <div className="p-4 rounded-lg bg-orange-50">
+                      <div className="flex items-center gap-2 mb-1">
+                        <AlertCircle className="w-4 h-4 text-orange-600" />
+                        <span className="text-xs text-muted-foreground">Allergies</span>
+                      </div>
+                      <p className="font-semibold text-orange-700">
+                        {currentUser.allergies.join(", ")}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
-              <h3 className="text-lg font-semibold text-primary">Care Plans</h3>
-              <p className="text-sm text-muted-foreground">Personalized health guidance</p>
             </div>
-          </Card>
+          </CardContent>
+        </Card>
+
+        {/* Document Timeline Section */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-orange-600 mb-2 font-[family-name:var(--font-quicksand)]">
+            My Health Records Timeline
+          </h2>
+          <p className="text-muted-foreground">
+            Your complete medical history organized by date
+          </p>
         </div>
+
+        <DocumentTimeline documents={currentUserDocuments} accentColor="orange" />
       </div>
     </div>
-  )
+  );
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { Heart, LayoutDashboard, Users } from "lucide-react"
+import { Heart, LayoutDashboard, Users, Calendar } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -26,6 +26,11 @@ const items = [
     title: "Family",
     url: "/family",
     icon: Users,
+  },
+  {
+    title: "Appointments",
+    url: "/appointments",
+    icon: Calendar,
   },
 ]
 

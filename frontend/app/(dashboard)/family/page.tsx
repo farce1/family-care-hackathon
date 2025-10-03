@@ -1,8 +1,9 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { FileText, Calendar, Building2 } from "lucide-react"
+import { FileText, Calendar, Building2, ArrowRight } from "lucide-react"
 import { TextAnimate } from "@/components/ui/text-animate"
+import Link from "next/link"
 
 interface FamilyMember {
   id: string
@@ -80,13 +81,13 @@ export default function FamilyPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {familyMembers.map((member, index) => (
-            <Card
-              key={member.id}
-              className="group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-border bg-white/80 backdrop-blur-sm overflow-hidden relative"
-              style={{
-                animationDelay: `${index * 100}ms`,
-              }}
-            >
+            <Link key={member.id} href={`/family/${member.id}`}>
+              <Card
+                className="group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-border bg-white/80 backdrop-blur-sm overflow-hidden relative cursor-pointer"
+                style={{
+                  animationDelay: `${index * 100}ms`,
+                }}
+              >
               {/* Decorative accent line */}
               <div
                 className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
@@ -246,8 +247,23 @@ export default function FamilyPage() {
                     </div>
                   </div>
                 )}
+
+                {/* View Details Button */}
+                <div className="mt-4 pt-4 border-t border-border">
+                  <div
+                    className={`flex items-center justify-center gap-2 text-sm font-medium transition-colors ${
+                      member.accentColor === "orange"
+                        ? "text-primary group-hover:text-primary/80"
+                        : "text-secondary group-hover:text-secondary/80"
+                    }`}
+                  >
+                    View Details
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
+            </Link>
           ))}
         </div>
       </div>

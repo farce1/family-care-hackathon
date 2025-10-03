@@ -81,7 +81,7 @@ export function LoginForm() {
             by="word"
             className="text-2xl font-bold text-primary mb-4 font-[family-name:var(--font-quicksand)] text-center"
           >
-            Your Family's Health Hub
+            Your Family&apos;s Health Hub
           </TextAnimate>
           <FamilyHealthDiagram />
           <TextAnimate
