@@ -51,9 +51,10 @@ MISSING_FIELDS_DATA = {
 
 class TestPDFParser:
 
-    @patch('main.client.chat.completions.create')
-    @patch('main.PyPDF2.PdfReader')
-    def test_high_confidence_complete_data(self, mock_pdf_reader, mock_chatgpt):
+    @patch('controllers.appointments.SessionLocal')
+    @patch('controllers.appointments.client.chat.completions.create')
+    @patch('controllers.appointments.PyPDF2.PdfReader')
+    def test_high_confidence_complete_data(self, mock_pdf_reader, mock_chatgpt, mock_session_local):
         """Test parsing with high confidence and complete data"""
         # Mock the PDF reader
         mock_page = Mock()
@@ -65,6 +66,22 @@ class TestPDFParser:
         mock_response.choices = [Mock()]
         mock_response.choices[0].message.content = json.dumps(HIGH_CONFIDENCE_COMPLETE_DATA)
         mock_chatgpt.return_value = mock_response
+
+        # Mock database session
+        mock_session = Mock()
+        mock_session_local.return_value = mock_session
+
+        # Create a mock appointment that will be passed to add()
+        mock_appointment_instance = Mock()
+        mock_appointment_instance.id = "test-id-123"
+
+        # Mock the session methods
+        def mock_refresh(obj):
+            obj.id = "test-id-123"
+
+        mock_session.add.return_value = None
+        mock_session.commit.return_value = None
+        mock_session.refresh.side_effect = mock_refresh
 
         # Create test file
         pdf_file = io.BytesIO(b"mock pdf content")
@@ -78,10 +95,12 @@ class TestPDFParser:
         assert data["appointment_type"] == "Specialist"
         assert data["confidence_score"] == 85
         assert "file_size" in data
+        assert data["id"] == "test-id-123"
 
-    @patch('main.client.chat.completions.create')
-    @patch('main.PyPDF2.PdfReader')
-    def test_high_confidence_missing_appointment_type(self, mock_pdf_reader, mock_chatgpt):
+    @patch('controllers.appointments.SessionLocal')
+    @patch('controllers.appointments.client.chat.completions.create')
+    @patch('controllers.appointments.PyPDF2.PdfReader')
+    def test_high_confidence_missing_appointment_type(self, mock_pdf_reader, mock_chatgpt, mock_session_local):
         """Test parsing with high confidence but missing appointment type - should set to 'Other'"""
         # Mock the PDF reader
         mock_page = Mock()
@@ -92,6 +111,15 @@ class TestPDFParser:
         mock_response.choices = [Mock()]
         mock_response.choices[0].message.content = json.dumps(HIGH_CONFIDENCE_MISSING_TYPE_DATA)
         mock_chatgpt.return_value = mock_response
+
+        # Mock database session
+        mock_session = Mock()
+        mock_session_local.return_value = mock_session
+        mock_appointment = Mock()
+        mock_appointment.id = "test-id-456"
+        mock_session.add.return_value = None
+        mock_session.commit.return_value = None
+        mock_session.refresh.return_value = None
 
         pdf_file = io.BytesIO(b"mock pdf content")
         files = {"file": ("test.pdf", pdf_file, "application/pdf")}
@@ -104,8 +132,8 @@ class TestPDFParser:
         assert data["appointment_type"] == "Other"  # Should be set to 'Other'
         assert data["confidence_score"] == 78
 
-    @patch('main.client.chat.completions.create')
-    @patch('main.PyPDF2.PdfReader')
+    @patch('controllers.appointments.client.chat.completions.create')
+    @patch('controllers.appointments.PyPDF2.PdfReader')
     def test_low_confidence_data(self, mock_pdf_reader, mock_chatgpt):
         """Test parsing with low confidence score - should return 400 error"""
         # Mock the PDF reader
@@ -126,8 +154,8 @@ class TestPDFParser:
         assert response.status_code == 400
         assert "Low confidence score" in response.json()["detail"]
 
-    @patch('main.client.chat.completions.create')
-    @patch('main.PyPDF2.PdfReader')
+    @patch('controllers.appointments.client.chat.completions.create')
+    @patch('controllers.appointments.PyPDF2.PdfReader')
     def test_missing_required_fields(self, mock_pdf_reader, mock_chatgpt):
         """Test parsing with missing required fields - should return 400 error"""
         # Mock the PDF reader
@@ -148,8 +176,8 @@ class TestPDFParser:
         assert response.status_code == 400
         assert "Missing required fields" in response.json()["detail"]
 
-    @patch('main.client.chat.completions.create')
-    @patch('main.PyPDF2.PdfReader')
+    @patch('controllers.appointments.client.chat.completions.create')
+    @patch('controllers.appointments.PyPDF2.PdfReader')
     def test_invalid_json_response(self, mock_pdf_reader, mock_chatgpt):
         """Test parsing when ChatGPT returns invalid JSON - should return 400 error"""
         # Mock the PDF reader
