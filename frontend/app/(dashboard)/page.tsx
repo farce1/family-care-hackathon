@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from "react";
 import { Particles } from "@/components/ui/particles";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +16,7 @@ import {
 import { DocumentTimeline } from "@/components/document-timeline";
 import { BookAppointmentDialog } from "@/components/book-appointment-dialog";
 import { UploadMedicalRecordDialog } from "@/components/upload-medical-record-dialog";
+import { AppointmentReminderPopup } from "@/components/appointment-reminder-popup";
 import {
   currentUser,
   getUpcomingAppointments,
@@ -85,9 +87,31 @@ function getStatusDisplay(status: string) {
 export default function Home() {
   const upcomingAppointments = getUpcomingAppointments();
   const archivalAppointments = getArchivalAppointments();
+  const [showReminderPopup, setShowReminderPopup] = useState(false);
+  const [showBookAppointmentDialog, setShowBookAppointmentDialog] = useState(false);
 
   // Fetch parsed appointments from backend
   const { data: documents, isLoading, isError, error } = useParsedAppointments();
+
+  // Check for completed appointments older than 30 days and show reminder
+  useEffect(() => {
+    const now = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(now.getDate() - 30);
+
+    const oldCompletedAppointments = archivalAppointments.filter(
+      (apt) => apt.status === "completed" && apt.dateTime < thirtyDaysAgo
+    );
+
+    if (oldCompletedAppointments.length > 0) {
+      // Show popup after a short delay to let the page load
+      const timer = setTimeout(() => {
+        setShowReminderPopup(true);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [archivalAppointments]);
 
   return (
     <div className="relative h-screen bg-gradient-to-br from-background via-background to-background/90 overflow-hidden">
@@ -384,6 +408,14 @@ export default function Home() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Appointment Reminder Popup */}
+      <AppointmentReminderPopup
+        appointments={archivalAppointments}
+        isOpen={showReminderPopup}
+        onClose={() => setShowReminderPopup(false)}
+        onBookNew={() => setShowBookAppointmentDialog(true)}
+      />
     </div>
   );
 }
