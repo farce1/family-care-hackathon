@@ -161,7 +161,7 @@ async function main() {
   console.log('🏥 Testing NFZ API with correct structure...\n');
 
   try {
-    const results = await getNFZQueues();
+    const results = await getNFZQueues({benefit: "PORADNIA ALERGOLOGICZNA"});
 
     console.log('✅ API call successful!');
     console.log('📊 Results:');
