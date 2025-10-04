@@ -1,0 +1,1 @@
+"""Family Care MCP Server."""

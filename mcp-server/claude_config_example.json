@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "family-care": {
+      "command": "uv",
+      "args": ["run", "fastmcp", "run", "app/main.py"],
+      "cwd": "/path/to/family-care-hackathon/mcp-server",
+      "env": {
+        "BACKEND_URL": "http://localhost:8000"
+      }
+    }
+  }
+}

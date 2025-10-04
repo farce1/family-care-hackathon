@@ -43,3 +43,21 @@ export async function fetchParsedAppointments(): Promise<ParsedAppointment[]> {
   const data = await response.json();
   return data;
 }
+
+/**
+ * Upcoming Appointment interface
+ * Used for NFZ appointments fetched directly from the API
+ */
+export interface UpcomingAppointment {
+  id: string;
+  place: string;
+  provider: string;
+  phone: string | null;
+  address: string;
+  locality: string;
+  date: string;
+  benefit: string;
+  average_wait_days: number;
+  latitude: number | string | null;
+  longitude: number | string | null;
+}

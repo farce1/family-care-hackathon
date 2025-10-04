@@ -1,0 +1,1 @@
+"""MCP tool implementations for Family Care system."""

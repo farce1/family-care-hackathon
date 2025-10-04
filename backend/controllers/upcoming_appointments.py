@@ -507,6 +507,146 @@ async def fetch_and_upload_nfz(
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
+@router.post("/save_appointment")
+async def save_single_appointment(appointment: ParsedNFZItem):
+    """
+    Save a single NFZ appointment to the database.
+    Accepts appointment data and stores it in the upcoming_appointments table.
+
+    Args:
+        appointment: ParsedNFZItem containing the appointment details
+
+    Returns:
+        Dictionary with save status and appointment details
+    """
+    db = SessionLocal()
+    try:
+        is_new, error_msg = NFZService.process_appointment_to_db(appointment, db)
+
+        if error_msg:
+            db.rollback()
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "message": error_msg
+                }
+            )
+
+        db.commit()
+
+        # Fetch the saved appointment
+        saved_appointment = db.query(UpcomingAppointment).filter(
+            UpcomingAppointment.nfz_id == appointment.id
+        ).first()
+
+        if saved_appointment:
+            return {
+                "success": True,
+                "message": "Appointment saved successfully" if is_new else "Appointment already exists and was updated",
+                "is_new": is_new,
+                "appointment": {
+                    "id": str(saved_appointment.id),
+                    "nfz_id": saved_appointment.nfz_id,
+                    "place": saved_appointment.place,
+                    "provider": saved_appointment.provider,
+                    "phone": saved_appointment.phone,
+                    "address": saved_appointment.address,
+                    "locality": saved_appointment.locality,
+                    "date": saved_appointment.date.isoformat(),
+                    "benefit": saved_appointment.benefit,
+                    "average_wait_days": saved_appointment.average_wait_days
+                }
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Failed to retrieve saved appointment"
+            }
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    finally:
+        db.close()
+
+
+@router.get("/fetch_nfz_appointments")
+async def fetch_nfz_appointments(
+        page: Optional[int] = 1,
+        limit: Optional[int] = 10,
+        format: Optional[str] = "json",
+        case: Optional[int] = 1,
+        province: Optional[str] = "01",
+        benefit: Optional[str] = "PORADNIA ALERGOLOGICZNA",
+        benefitForChildren: Optional[bool] = False,
+        apiVersion: Optional[str] = "1.3"
+):
+    """
+    Fetches appointments directly from NFZ API without saving to database.
+    Returns the raw NFZ data as parsed items.
+
+    Query Parameters:
+    - page: Page number (default: 1)
+    - limit: Results per page (default: 10)
+    - format: Response format (default: json)
+    - case: Case type (default: 1)
+    - province: Province code (default: 01)
+    - benefit: Medical specialty/benefit type
+    - benefitForChildren: Whether it's for children (default: False)
+    - apiVersion: NFZ API version (default: 1.3)
+    """
+    try:
+        # Create params object
+        params = NFZQueueParams(
+            page=page,
+            limit=limit,
+            format=format,
+            case=case,
+            province=province,
+            benefit=benefit,
+            benefitForChildren=benefitForChildren,
+            apiVersion=apiVersion
+        )
+
+        # Fetch from NFZ API
+        appointments = await NFZService.get_nfz_queues(params)
+
+        if not appointments:
+            return JSONResponse(content={
+                "success": True,
+                "message": "No appointments found from NFZ API",
+                "total": 0,
+                "appointments": []
+            })
+
+        # Format response - convert ParsedNFZItem to dict
+        response_data = []
+        for appointment in appointments:
+            response_data.append({
+                "id": appointment.id,
+                "place": appointment.place,
+                "provider": appointment.provider,
+                "phone": appointment.phone,
+                "address": appointment.address,
+                "locality": appointment.locality,
+                "date": appointment.date,
+                "benefit": appointment.benefit,
+                "averageWaitDays": appointment.averageWaitDays,
+                "latitude": appointment.latitude,
+                "longitude": appointment.longitude
+            })
+
+        return {
+            "success": True,
+            "total": len(response_data),
+            "appointments": response_data
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching NFZ appointments: {str(e)}")
+
+
 @router.get("/upcoming_appointments")
 async def get_appointments(
         locality: Optional[str] = None,

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/popover"
 import { currentUser } from "@/lib/mock-data"
 import { useParsedAppointments } from "@/lib/hooks/use-parsed-appointments"
+import { logout } from "@/lib/api/auth"
 
 interface UserProfile {
   name: string
@@ -42,14 +43,15 @@ export function ProfilePopup() {
   const [editedProfile, setEditedProfile] = React.useState<UserProfile>(profile)
 
   const handleLogout = () => {
-    // Clear the logged-in cookie
-    document.cookie = "logged-in=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
+    // Clear authentication token and cookies
+    logout()
 
     // Close the popover
     setOpen(false)
 
     // Redirect to login page
     router.push("/login")
+    router.refresh()
   }
 
   const handleSave = () => {

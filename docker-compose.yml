@@ -45,6 +45,17 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-  
+
+  mcp-server:
+    build: ./mcp-server
+    container_name: mcp-server
+    ports:
+      - "8888:8888"
+    environment:
+      - BACKEND_URL=http://backend:8000
+    restart: unless-stopped
+    depends_on:
+      - backend
+
 volumes:
   postgres_data:
