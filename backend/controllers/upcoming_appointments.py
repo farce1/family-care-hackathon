@@ -426,7 +426,7 @@ class NFZService:
 router = APIRouter()
 
 
-@router.post("/fetch-and-upload-nfz")
+@router.post("/add_appointment")
 async def fetch_and_upload_nfz(
         page: Optional[int] = 1,
         limit: Optional[int] = 10,
@@ -507,7 +507,7 @@ async def fetch_and_upload_nfz(
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
-@router.get("/appointments")
+@router.get("/upcoming_appointments")
 async def get_appointments(
         locality: Optional[str] = None,
         benefit: Optional[str] = None,
