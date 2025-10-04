@@ -1,6 +1,7 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 import os
 from dotenv import load_dotenv
 import PyPDF2
@@ -23,8 +24,11 @@ DATABASE_URL = "postgresql://familycare:familycare@postgres:5432/familycare"
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Import models
-from models import ParsedAppointment
+# Import models and auth dependencies
+from models import ParsedAppointment, User
+
+# Import auth dependencies
+from controllers.auth import get_current_user
 
 # Dependency to get database session
 def get_db():
@@ -61,7 +65,7 @@ class ParsedAppointmentResponse(BaseModel):
 router = APIRouter()
 
 @router.post("/parse-pdf")
-async def parse_pdf(file: UploadFile = File(...)):
+async def parse_pdf(file: UploadFile = File(...), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
     Parse PDF file to extract appointment information using ChatGPT API.
     Stores the parsed data in the database.
@@ -198,8 +202,9 @@ async def parse_pdf(file: UploadFile = File(...)):
 
         # Always save to database
         try:
-            # Create database record
+            # Create database record with user reference
             db_appointment = ParsedAppointment(
+                user_id=current_user.id,
                 original_filename=file.filename,
                 name=appointment_data.name,
                 date=datetime.strptime(appointment_data.date, '%Y-%m-%d').date(),
@@ -212,18 +217,15 @@ async def parse_pdf(file: UploadFile = File(...)):
                 confidence_score=appointment_data.confidence_score
             )
 
-            # Save to database
-            db = SessionLocal()
-            try:
-                db.add(db_appointment)
-                db.commit()
-                db.refresh(db_appointment)
-                # Add the database ID to the response
-                response_data = appointment_data.model_dump()
-                response_data['id'] = str(db_appointment.id)
-                return JSONResponse(content=response_data)
-            finally:
-                db.close()
+            # Save to database using the injected session
+            db.add(db_appointment)
+            db.commit()
+            db.refresh(db_appointment)
+
+            # Add the database ID to the response
+            response_data = appointment_data.model_dump()
+            response_data['id'] = str(db_appointment.id)
+            return JSONResponse(content=response_data)
 
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
@@ -235,17 +237,16 @@ async def parse_pdf(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Error processing PDF: {str(e)}")
 
 @router.get("/parsed-appointments", response_model=List[ParsedAppointmentResponse])
-async def get_parsed_appointments():
+async def get_parsed_appointments(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
-    Get all parsed appointments from the database.
+    Get all parsed appointments for the current user.
 
     Returns:
-        List of all parsed appointments with their details
+        List of user's parsed appointments with their details
     """
-    db = SessionLocal()
     try:
-        # Query all parsed appointments
-        appointments = db.query(ParsedAppointment).all()
+        # Query parsed appointments for the current user
+        appointments = db.query(ParsedAppointment).filter(ParsedAppointment.user_id == current_user.id).all()
 
         # Convert to response format
         response_data = []
@@ -268,5 +269,3 @@ async def get_parsed_appointments():
         return response_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-    finally:
-        db.close()

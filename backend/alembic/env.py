@@ -9,8 +9,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 # Import your models here so Alembic can detect them
-from controllers.appointments import Base, ParsedAppointment
-from controllers.upcoming_appointments import UpcomingAppointment
+from models import Base, ParsedAppointment
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

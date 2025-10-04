@@ -3,6 +3,7 @@
  */
 
 import { getApiBaseUrl, API_ENDPOINTS } from './config';
+import { getStoredToken } from './auth';
 
 /**
  * Response from the /parse-pdf endpoint
@@ -104,6 +105,13 @@ export async function uploadPdfFile(
 
     // Open and send the request
     xhr.open('POST', url);
+
+    // Add authorization header if token exists
+    const token = getStoredToken();
+    if (token) {
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    }
+
     xhr.send(formData);
   });
 }

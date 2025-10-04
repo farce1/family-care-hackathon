@@ -4,6 +4,23 @@
 
 import { ParsedAppointment } from '@/types/parsed-appointment';
 import { getApiBaseUrl, API_ENDPOINTS } from './config';
+import { getStoredToken } from './auth';
+
+/**
+ * Get authorization headers if token exists
+ */
+function getAuthHeaders(): Record<string, string> {
+  const token = getStoredToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return headers;
+}
 
 /**
  * Fetch all parsed appointments from the backend
@@ -14,9 +31,7 @@ export async function fetchParsedAppointments(): Promise<ParsedAppointment[]> {
 
   const response = await fetch(url, {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getAuthHeaders(),
     // Don't cache in production to ensure fresh data
     cache: 'no-store',
   });

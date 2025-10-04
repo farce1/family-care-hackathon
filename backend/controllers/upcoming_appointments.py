@@ -5,8 +5,22 @@ from typing import Optional, List
 from datetime import datetime
 import uuid
 
-# Import Base and database setup from appointments controller
-from controllers.appointments import Base, SessionLocal, get_db
+# Import Base and database setup from models
+from models import Base
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+
+# Database setup
+DATABASE_URL = "postgresql://familycare:familycare@postgres:5432/familycare"
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 # Import SQLAlchemy components for the new model
 from sqlalchemy import Column, String, Integer, Date, Text, Boolean, TIMESTAMP, UUID, Float
@@ -256,7 +270,7 @@ async def get_upcoming_appointment(nfz_id: str):
             benefit=appointment.benefit,
             waiting_people=appointment.waiting_people,
             average_wait_days=appointment.average_wait_days,
-            latitude=apartment.latitude,
+            latitude=appointment.latitude,
             longitude=appointment.longitude,
             is_active=appointment.is_active,
             created_at=appointment.created_at.isoformat(),

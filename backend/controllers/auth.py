@@ -31,11 +31,14 @@ security = HTTPBearer()
 class LoginRequest(BaseModel):
     email: EmailStr
 
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user_id: str
     email: str
+    first_name: str
+    last_name: str
 
 class UserResponse(BaseModel):
     id: str
@@ -109,8 +112,11 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
     return TokenResponse(
         access_token=access_token,
         user_id=str(user.id),
-        email=user.email
+        email=user.email,
+        first_name=user.first_name,
+        last_name=user.last_name
     )
+
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(current_user: User = Depends(get_current_user)):

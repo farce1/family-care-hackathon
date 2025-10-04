@@ -16,4 +16,8 @@ export const getApiBaseUrl = (): string => {
 export const API_ENDPOINTS = {
   PARSED_APPOINTMENTS: '/parsed-appointments',
   PARSE_PDF: '/parse-pdf',
+  AUTH: {
+    LOGIN: '/auth/login',
+    ME: '/auth/me',
+  },
 } as const;
