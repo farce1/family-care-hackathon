@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { z } from "zod"
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   Dialog,
   DialogContent,
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { AlertCircle, Plus, Loader2, MapPin, Calendar, Phone, Building2, Clock } from "lucide-react"
+import { AlertCircle, Plus, Loader2, MapPin, Calendar, Phone, Building2, Clock, Check } from "lucide-react"
 import { getApiBaseUrl, API_ENDPOINTS } from "@/lib/api/config"
 import { UpcomingAppointment } from "@/lib/api/appointments"
 import { cn } from "@/lib/utils"
@@ -188,10 +188,51 @@ type SpecialtyFormData = z.infer<typeof specialtySchema>
 type ValidationErrors = Partial<Record<keyof SpecialtyFormData, string>>
 
 export function BookAppointmentDialog() {
+  const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const [specialty, setSpecialty] = useState<string>("")
   const [errors, setErrors] = useState<ValidationErrors>({})
   const [appointments, setAppointments] = useState<UpcomingAppointment[]>([])
+  const [savedAppointmentIds, setSavedAppointmentIds] = useState<Set<string>>(new Set())
+
+  // Mutation for saving a single appointment
+  const saveAppointmentMutation = useMutation({
+    mutationFn: async (appointment: UpcomingAppointment) => {
+      const baseUrl = getApiBaseUrl()
+      const url = `${baseUrl}/save_appointment`
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: appointment.id,
+          place: appointment.place,
+          provider: appointment.provider,
+          phone: appointment.phone,
+          address: appointment.address,
+          locality: appointment.locality,
+          date: appointment.date,
+          benefit: appointment.benefit,
+          averageWaitDays: appointment.average_wait_days,
+          latitude: appointment.latitude,
+          longitude: appointment.longitude,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to save appointment: ${response.status} ${response.statusText}`)
+      }
+
+      return await response.json()
+    },
+    onSuccess: (data, appointment) => {
+      setSavedAppointmentIds(prev => new Set(prev).add(appointment.id))
+      // Invalidate and refetch upcoming appointments query to refresh the appointments table
+      queryClient.invalidateQueries({ queryKey: ['upcoming-appointments'] })
+    },
+  })
 
   // Mutation for fetching appointments from NFZ API
   const fetchAppointmentsMutation = useMutation({
@@ -282,7 +323,9 @@ export function BookAppointmentDialog() {
       setSpecialty("")
       setErrors({})
       setAppointments([])
+      setSavedAppointmentIds(new Set())
       fetchAppointmentsMutation.reset()
+      saveAppointmentMutation.reset()
     }
   }
 
@@ -413,61 +456,92 @@ export function BookAppointmentDialog() {
               </span>
             </div>
             <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-200 scrollbar-track-gray-100">
-              {appointments.map((appointment) => (
-                <div
-                  key={appointment.id}
-                  className="p-5 bg-gradient-to-br from-white to-orange-50/30 border-2 border-gray-200 rounded-2xl hover:border-orange-300 hover:shadow-md transition-all duration-200"
-                >
-                  <div className="flex items-start justify-between gap-6">
-                    <div className="flex-1 space-y-3">
-                      {/* Provider and Place */}
-                      <div>
-                        <h4 className="font-bold text-lg text-gray-900">{appointment.provider}</h4>
-                        <p className="text-sm text-gray-600 font-medium">{appointment.place}</p>
-                      </div>
+              {appointments.map((appointment) => {
+                const isSaved = savedAppointmentIds.has(appointment.id)
+                const isSaving = saveAppointmentMutation.isPending && saveAppointmentMutation.variables?.id === appointment.id
 
-                      {/* Location */}
-                      <div className="flex items-start gap-2.5 text-sm text-gray-700">
-                        <div className="p-1.5 bg-orange-100 rounded-lg">
-                          <MapPin className="w-4 h-4 text-orange-600" />
-                        </div>
+                return (
+                  <div
+                    key={appointment.id}
+                    className="p-5 bg-gradient-to-br from-white to-orange-50/30 border-2 border-gray-200 rounded-2xl hover:border-orange-300 hover:shadow-md transition-all duration-200"
+                  >
+                    <div className="flex items-start justify-between gap-6">
+                      <div className="flex-1 space-y-3">
+                        {/* Provider and Place */}
                         <div>
-                          <p className="font-medium">{appointment.address}</p>
-                          <p className="text-gray-600">{appointment.locality}</p>
+                          <h4 className="font-bold text-lg text-gray-900">{appointment.provider}</h4>
+                          <p className="text-sm text-gray-600 font-medium">{appointment.place}</p>
                         </div>
-                      </div>
 
-                      {/* Phone */}
-                      {appointment.phone && (
-                        <div className="flex items-center gap-2.5 text-sm text-gray-700">
+                        {/* Location */}
+                        <div className="flex items-start gap-2.5 text-sm text-gray-700">
                           <div className="p-1.5 bg-orange-100 rounded-lg">
-                            <Phone className="w-4 h-4 text-orange-600" />
+                            <MapPin className="w-4 h-4 text-orange-600" />
                           </div>
-                          <span className="font-medium">{appointment.phone}</span>
+                          <div>
+                            <p className="font-medium">{appointment.address}</p>
+                            <p className="text-gray-600">{appointment.locality}</p>
+                          </div>
                         </div>
-                      )}
-                    </div>
 
-                    {/* Date and Wait Time */}
-                    <div className="flex flex-col items-end gap-3">
-                      <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-100 to-amber-100 text-orange-800 rounded-xl shadow-sm">
-                        <Calendar className="w-5 h-5" />
-                        <span className="font-bold text-base">
-                          {new Date(appointment.date).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </span>
+                        {/* Phone */}
+                        {appointment.phone && (
+                          <div className="flex items-center gap-2.5 text-sm text-gray-700">
+                            <div className="p-1.5 bg-orange-100 rounded-lg">
+                              <Phone className="w-4 h-4 text-orange-600" />
+                            </div>
+                            <span className="font-medium">{appointment.phone}</span>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg">
-                        <Clock className="w-4 h-4" />
-                        <span className="font-semibold">{appointment.average_wait_days} days</span>
+
+                      {/* Right Side: Date, Wait Time, and Book Button */}
+                      <div className="flex flex-col items-end gap-3">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-100 to-amber-100 text-orange-800 rounded-xl shadow-sm">
+                          <Calendar className="w-5 h-5" />
+                          <span className="font-bold text-base">
+                            {new Date(appointment.date).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg">
+                          <Clock className="w-4 h-4" />
+                          <span className="font-semibold">{appointment.average_wait_days} days</span>
+                        </div>
+
+                        {/* Book Appointment Button */}
+                        <Button
+                          onClick={() => saveAppointmentMutation.mutate(appointment)}
+                          disabled={isSaved || isSaving}
+                          className={cn(
+                            "w-full mt-2 rounded-xl font-semibold transition-all",
+                            isSaved
+                              ? "bg-green-500 hover:bg-green-600"
+                              : "bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600"
+                          )}
+                        >
+                          {isSaving ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Saving...
+                            </>
+                          ) : isSaved ? (
+                            <>
+                              <Check className="w-4 h-4 mr-2" />
+                              Saved
+                            </>
+                          ) : (
+                            "Book Appointment"
+                          )}
+                        </Button>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}

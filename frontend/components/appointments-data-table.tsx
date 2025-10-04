@@ -68,6 +68,12 @@ export function AppointmentsDataTable({
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [globalFilter, setGlobalFilter] = React.useState("")
 
+  // Reset sorting when filter changes to ensure proper ordering
+  React.useEffect(() => {
+    // Reset to default sort (by date ascending) when filter changes
+    setSorting([{ id: "dateTime", desc: false }])
+  }, [selectedFilter])
+
   const table = useReactTable({
     data,
     columns,

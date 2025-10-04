@@ -507,6 +507,70 @@ async def fetch_and_upload_nfz(
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
+@router.post("/save_appointment")
+async def save_single_appointment(appointment: ParsedNFZItem):
+    """
+    Save a single NFZ appointment to the database.
+    Accepts appointment data and stores it in the upcoming_appointments table.
+
+    Args:
+        appointment: ParsedNFZItem containing the appointment details
+
+    Returns:
+        Dictionary with save status and appointment details
+    """
+    db = SessionLocal()
+    try:
+        is_new, error_msg = NFZService.process_appointment_to_db(appointment, db)
+
+        if error_msg:
+            db.rollback()
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "message": error_msg
+                }
+            )
+
+        db.commit()
+
+        # Fetch the saved appointment
+        saved_appointment = db.query(UpcomingAppointment).filter(
+            UpcomingAppointment.nfz_id == appointment.id
+        ).first()
+
+        if saved_appointment:
+            return {
+                "success": True,
+                "message": "Appointment saved successfully" if is_new else "Appointment already exists and was updated",
+                "is_new": is_new,
+                "appointment": {
+                    "id": str(saved_appointment.id),
+                    "nfz_id": saved_appointment.nfz_id,
+                    "place": saved_appointment.place,
+                    "provider": saved_appointment.provider,
+                    "phone": saved_appointment.phone,
+                    "address": saved_appointment.address,
+                    "locality": saved_appointment.locality,
+                    "date": saved_appointment.date.isoformat(),
+                    "benefit": saved_appointment.benefit,
+                    "average_wait_days": saved_appointment.average_wait_days
+                }
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Failed to retrieve saved appointment"
+            }
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    finally:
+        db.close()
+
+
 @router.get("/fetch_nfz_appointments")
 async def fetch_nfz_appointments(
         page: Optional[int] = 1,
