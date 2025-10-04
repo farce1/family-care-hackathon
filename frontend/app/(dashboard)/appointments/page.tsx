@@ -2,13 +2,15 @@
 
 import { TextAnimate } from "@/components/ui/text-animate"
 import { BookAppointmentDialog } from "@/components/book-appointment-dialog"
-import { appointments } from "@/lib/mock-data"
+import { AppointmentReminderPopup } from "@/components/appointment-reminder-popup"
+import { appointments, currentUser } from "@/lib/mock-data"
 import { AppointmentsDataTable } from "@/components/appointments-data-table"
 import { appointmentsTableColumns } from "@/components/appointments-table-columns"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 export default function AppointmentsPage() {
   const [selectedFilter, setSelectedFilter] = useState("all")
+  const [showReminderPopup, setShowReminderPopup] = useState(false)
 
   // Split appointments by status
   const upcomingAppointments = appointments.filter(
@@ -21,6 +23,26 @@ export default function AppointmentsPage() {
     (apt) => apt.status === "cancelled" || apt.status === "rescheduled" || apt.status === "no-show"
   )
   const allAppointments = appointments
+
+  // Check for completed appointments older than 30 days and show reminder
+  useEffect(() => {
+    const now = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(now.getDate() - 30);
+
+    const oldCompletedAppointments = completedAppointments.filter(
+      (apt) => apt.dateTime < thirtyDaysAgo
+    );
+
+    if (oldCompletedAppointments.length > 0) {
+      // Show popup after a short delay to let the page load
+      const timer = setTimeout(() => {
+        setShowReminderPopup(true);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [completedAppointments]);
 
   // Get filtered data based on selection
   const getFilteredData = () => {
@@ -68,6 +90,13 @@ export default function AppointmentsPage() {
             { value: "completed", label: `Completed (${completedAppointments.length})` },
             { value: "cancelled", label: `Other (${cancelledAppointments.length})` },
           ]}
+        />
+
+        {/* Appointment Reminder Popup */}
+        <AppointmentReminderPopup
+          appointments={completedAppointments}
+          isOpen={showReminderPopup}
+          onClose={() => setShowReminderPopup(false)}
         />
       </div>
     </div>
