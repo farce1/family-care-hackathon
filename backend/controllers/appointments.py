@@ -27,8 +27,9 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Import models and auth dependencies
 from models import ParsedAppointment, User
 
-# Import auth dependencies
+# Import auth dependencies and utilities
 from controllers.auth import get_current_user
+from utils import get_default_mcp_user
 
 # Dependency to get database session
 def get_db():
@@ -65,7 +66,7 @@ class ParsedAppointmentResponse(BaseModel):
 router = APIRouter()
 
 @router.post("/parse-pdf")
-async def parse_pdf(file: UploadFile = File(...), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """
     Parse PDF file to extract appointment information using ChatGPT API.
     Stores the parsed data in the database.
@@ -202,9 +203,12 @@ async def parse_pdf(file: UploadFile = File(...), current_user: User = Depends(g
 
         # Always save to database
         try:
-            # Create database record with user reference
+            # Get default MCP user for no-auth operations
+            default_user = get_default_mcp_user(db)
+
+            # Create database record with default user reference
             db_appointment = ParsedAppointment(
-                user_id=current_user.id,
+                user_id=default_user.id,
                 original_filename=file.filename,
                 name=appointment_data.name,
                 date=datetime.strptime(appointment_data.date, '%Y-%m-%d').date(),
@@ -237,16 +241,16 @@ async def parse_pdf(file: UploadFile = File(...), current_user: User = Depends(g
         raise HTTPException(status_code=500, detail=f"Error processing PDF: {str(e)}")
 
 @router.get("/parsed-appointments", response_model=List[ParsedAppointmentResponse])
-async def get_parsed_appointments(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def get_parsed_appointments(db: Session = Depends(get_db)):
     """
-    Get all parsed appointments for the current user.
+    Get all parsed appointments (no auth required).
 
     Returns:
-        List of user's parsed appointments with their details
+        List of all parsed appointments
     """
     try:
-        # Query parsed appointments for the current user
-        appointments = db.query(ParsedAppointment).filter(ParsedAppointment.user_id == current_user.id).all()
+        # Query all parsed appointments
+        appointments = db.query(ParsedAppointment).all()
 
         # Convert to response format
         response_data = []

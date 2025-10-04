@@ -18,6 +18,10 @@ const loginSchema = z.object({
     .string()
     .min(1, "Email is required")
     .email("Please enter a valid email address"),
+  password: z
+    .string()
+    .min(1, "Password is required")
+    .min(8, "Password must be at least 8 characters"),
 })
 
 type LoginFormData = z.infer<typeof loginSchema>
@@ -26,6 +30,7 @@ type ValidationErrors = Partial<Record<keyof LoginFormData, string>>
 export function LoginForm() {
   const router = useRouter()
   const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<ValidationErrors>({})
   const [generalError, setGeneralError] = useState<string>("")
@@ -36,7 +41,7 @@ export function LoginForm() {
     setGeneralError("")
 
     // Validate form
-    const result = loginSchema.safeParse({ email })
+    const result = loginSchema.safeParse({ email, password })
 
     if (!result.success) {
       const fieldErrors: ValidationErrors = {}
@@ -53,7 +58,7 @@ export function LoginForm() {
 
     try {
       // Call the login API
-      const response = await login({ email: result.data.email })
+      const response = await login({ email: result.data.email, password: result.data.password })
 
       // Store the token in localStorage
       storeToken(response.access_token)
@@ -169,6 +174,42 @@ export function LoginForm() {
               )}
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-secondary text-sm font-medium">
+                Password
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  // Clear error when user types
+                  if (errors.password) {
+                    setErrors((prev) => ({ ...prev, password: undefined }))
+                  }
+                  // Clear general error when user types
+                  if (generalError) {
+                    setGeneralError("")
+                  }
+                }}
+                className={`bg-white/70 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary rounded-xl ${
+                  errors.password ? "border-destructive focus:border-destructive focus:ring-destructive" : ""
+                }`}
+                aria-invalid={!!errors.password}
+                aria-describedby={errors.password ? "password-error" : undefined}
+              />
+              {errors.password && (
+                <div
+                  id="password-error"
+                  className="flex items-center gap-1.5 text-destructive text-sm mt-1"
+                >
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{errors.password}</span>
+                </div>
+              )}
+            </div>
 
             <button
               type="submit"

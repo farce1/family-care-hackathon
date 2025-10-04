@@ -6,6 +6,7 @@ import { getApiBaseUrl } from './config';
 
 export interface LoginRequest {
   email: string;
+  password: string;
 }
 
 export interface AuthResponse {
@@ -25,7 +26,7 @@ export interface User {
 }
 
 /**
- * Login with email only
+ * Login with email and password
  */
 export async function login(request: LoginRequest): Promise<AuthResponse> {
   const baseUrl = getApiBaseUrl();
