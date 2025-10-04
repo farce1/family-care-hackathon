@@ -5,6 +5,8 @@
 - [🔍 About](#-about-the-project)
 - [🏗️ Architecture](#arch)
 - [🚀 Getting Started](#-getting-started)
+  - [🐳 Docker Compose](#docker)
+  - [💻 Local Environment](#local)
 - [📄 License](#-license)
 
 ## 🔍 About The Project
@@ -31,7 +33,7 @@
 
 Follow these steps to set up Family Care in your environment.
 
-### 🐳 Running with Docker Compose (Recommended)
+### 🐳 Running with Docker Compose (Recommended) <a name="docker"></a>
 
 **Prerequisites:**
 - Docker and Docker Compose installed
@@ -69,7 +71,7 @@ Follow these steps to set up Family Care in your environment.
    http://localhost:3000
    ```
 
-### 💻 Running Individually (Development)
+### 💻 Running Individually (Development) <a name="local"></a>
 
 ### Frontend (Next.js)
 
