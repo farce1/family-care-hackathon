@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { LogOut, User, Mail, Phone, Edit2, Calendar, Droplet, AlertCircle, FileText } from "lucide-react"
+import { LogOut, User, Mail, Phone, Edit2, Calendar, Droplet, AlertCircle, FileText, Loader2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,7 +13,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { currentUser, currentUserDocuments } from "@/lib/mock-data"
+import { currentUser } from "@/lib/mock-data"
+import { useParsedAppointments } from "@/lib/hooks/use-parsed-appointments"
 
 interface UserProfile {
   name: string
@@ -26,6 +27,9 @@ export function ProfilePopup() {
   const router = useRouter()
   const [isEditing, setIsEditing] = React.useState(false)
   const [open, setOpen] = React.useState(false)
+
+  // Fetch parsed appointments to get document count
+  const { data: documents, isLoading: isLoadingDocs } = useParsedAppointments()
 
   // Mock user data - in a real app, this would come from auth context or API
   const [profile, setProfile] = React.useState<UserProfile>({
@@ -122,10 +126,19 @@ export function ProfilePopup() {
 
           {/* Document Count Badge */}
           <div className="flex items-center gap-2 p-2 bg-orange-50 rounded-lg">
-            <FileText className="w-4 h-4 text-orange-600" />
-            <span className="text-sm font-semibold text-orange-700">
-              {currentUserDocuments.length} {currentUserDocuments.length === 1 ? "Document" : "Documents"}
-            </span>
+            {isLoadingDocs ? (
+              <>
+                <Loader2 className="w-4 h-4 text-orange-600 animate-spin" />
+                <span className="text-sm font-semibold text-orange-700">Loading documents...</span>
+              </>
+            ) : (
+              <>
+                <FileText className="w-4 h-4 text-orange-600" />
+                <span className="text-sm font-semibold text-orange-700">
+                  {documents?.length || 0} {documents?.length === 1 ? "Document" : "Documents"}
+                </span>
+              </>
+            )}
           </div>
 
           <Separator className="bg-orange-100" />

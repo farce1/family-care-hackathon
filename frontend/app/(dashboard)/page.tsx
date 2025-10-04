@@ -1,3 +1,5 @@
+'use client';
+
 import { Particles } from "@/components/ui/particles";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,10 +17,10 @@ import { BookAppointmentDialog } from "@/components/book-appointment-dialog";
 import { UploadMedicalRecordDialog } from "@/components/upload-medical-record-dialog";
 import {
   currentUser,
-  currentUserDocuments,
   getUpcomingAppointments,
   getArchivalAppointments,
 } from "@/lib/mock-data";
+import { useParsedAppointments } from "@/lib/hooks/use-parsed-appointments";
 import {
   Heart,
   Calendar,
@@ -28,6 +30,8 @@ import {
   User,
   CheckCircle2,
   XCircle,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 
 // Format date for display
@@ -81,6 +85,9 @@ function getStatusDisplay(status: string) {
 export default function Home() {
   const upcomingAppointments = getUpcomingAppointments();
   const archivalAppointments = getArchivalAppointments();
+
+  // Fetch parsed appointments from backend
+  const { data: documents, isLoading, isError, error } = useParsedAppointments();
 
   return (
     <div className="relative h-screen bg-gradient-to-br from-background via-background to-background/90 overflow-hidden">
@@ -136,7 +143,33 @@ export default function Home() {
           {/* Health Records Tab */}
           <TabsContent value="records" className="mt-0 flex-1 flex flex-col min-h-0">
             <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-300 scrollbar-track-orange-50">
-              <DocumentTimeline documents={currentUserDocuments} accentColor="orange" />
+              {isLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
+                    <p className="text-sm text-muted-foreground">Loading health records...</p>
+                  </div>
+                </div>
+              ) : isError ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="flex flex-col items-center gap-3 max-w-md text-center">
+                    <AlertCircle className="w-8 h-8 text-red-500" />
+                    <p className="text-sm font-medium text-red-700">Failed to load health records</p>
+                    <p className="text-xs text-muted-foreground">
+                      {error instanceof Error ? error.message : 'An unknown error occurred'}
+                    </p>
+                  </div>
+                </div>
+              ) : documents && documents.length > 0 ? (
+                <DocumentTimeline documents={documents} accentColor="orange" />
+              ) : (
+                <div className="flex items-center justify-center h-64">
+                  <div className="flex flex-col items-center gap-3">
+                    <FileText className="w-12 h-12 text-orange-300" />
+                    <p className="text-sm text-muted-foreground">No health records found</p>
+                  </div>
+                </div>
+              )}
             </div>
           </TabsContent>
 

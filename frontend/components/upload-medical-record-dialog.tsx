@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useCallback } from "react"
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { z } from "zod"
 import {
   Dialog,
@@ -22,8 +22,10 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
+  RotateCw,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { uploadPdfFile, type UploadError } from "@/lib/api/upload"
 
 // File validation schema
 const fileSchema = z.object({
@@ -46,56 +48,22 @@ interface FileWithStatus {
   status: FileStatus
   progress: number
   error?: string
+  retryCount?: number
 }
 
-// Mock upload function - replace with actual API call
-async function uploadFile(file: File, onProgress: (progress: number) => void): Promise<void> {
-  const formData = new FormData()
-  formData.append("file", file)
-
-  // Simulate upload with progress
-  return new Promise((resolve, reject) => {
-    let progress = 0
-    const interval = setInterval(() => {
-      progress += Math.random() * 30
-      if (progress >= 100) {
-        progress = 100
-        clearInterval(interval)
-        onProgress(100)
-
-        // Simulate API call
-        setTimeout(() => {
-          // Randomly succeed or fail for demo purposes
-          if (Math.random() > 0.1) {
-            resolve()
-          } else {
-            reject(new Error("Upload failed"))
-          }
-        }, 300)
-      } else {
-        onProgress(progress)
-      }
-    }, 200)
-  })
-
-  // Actual implementation would be:
-  // const response = await fetch('/api/upload-medical-record', {
-  //   method: 'POST',
-  //   body: formData,
-  // })
-  // if (!response.ok) throw new Error('Upload failed')
-}
+const MAX_RETRY_ATTEMPTS = 3;
 
 export function UploadMedicalRecordDialog() {
   const [open, setOpen] = useState(false)
   const [files, setFiles] = useState<FileWithStatus[]>([])
   const [isDragOver, setIsDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const queryClient = useQueryClient()
 
-  // Upload mutation
+  // Upload mutation with automatic retry on error
   const uploadMutation = useMutation({
     mutationFn: async ({ file, id }: { file: File; id: string }) => {
-      return uploadFile(file, (progress) => {
+      return uploadPdfFile(file, (progress) => {
         setFiles((prev) =>
           prev.map((f) =>
             f.id === id ? { ...f, progress, status: "uploading" as FileStatus } : f
@@ -103,21 +71,24 @@ export function UploadMedicalRecordDialog() {
         )
       })
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data, variables) => {
       setFiles((prev) =>
         prev.map((f) =>
           f.id === variables.id ? { ...f, status: "success" as FileStatus, progress: 100 } : f
         )
       )
+      // Invalidate the parsed appointments query to refetch updated data
+      queryClient.invalidateQueries({ queryKey: ['parsed-appointments'] })
     },
-    onError: (error, variables) => {
+    onError: (error: UploadError, variables) => {
+      const errorMessage = error.detail || "Upload failed"
       setFiles((prev) =>
         prev.map((f) =>
           f.id === variables.id
             ? {
                 ...f,
                 status: "error" as FileStatus,
-                error: error instanceof Error ? error.message : "Upload failed",
+                error: errorMessage,
               }
             : f
         )
@@ -139,6 +110,7 @@ export function UploadMedicalRecordDialog() {
           file,
           status: "pending",
           progress: 0,
+          retryCount: 0,
         })
       } else {
         errors.push(`${file.name}: ${validation.error.errors[0].message}`)
@@ -184,11 +156,56 @@ export function UploadMedicalRecordDialog() {
     setFiles((prev) => prev.filter((f) => f.id !== id))
   }, [])
 
+  const retryFile = useCallback(
+    async (id: string) => {
+      const fileItem = files.find((f) => f.id === id)
+      if (!fileItem) return
+
+      const currentRetryCount = fileItem.retryCount || 0
+      if (currentRetryCount >= MAX_RETRY_ATTEMPTS) {
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === id
+              ? {
+                  ...f,
+                  error: `Maximum retry attempts (${MAX_RETRY_ATTEMPTS}) reached`,
+                }
+              : f
+          )
+        )
+        return
+      }
+
+      // Reset file status and increment retry count
+      setFiles((prev) =>
+        prev.map((f) =>
+          f.id === id
+            ? {
+                ...f,
+                status: "pending" as FileStatus,
+                progress: 0,
+                error: undefined,
+                retryCount: currentRetryCount + 1,
+              }
+            : f
+        )
+      )
+
+      // Retry upload
+      try {
+        await uploadMutation.mutateAsync({ file: fileItem.file, id: fileItem.id })
+      } catch {
+        // Error handled by mutation onError
+      }
+    },
+    [files, uploadMutation]
+  )
+
   const handleUpload = useCallback(async () => {
     const pendingFiles = files.filter((f) => f.status === "pending")
 
-    // Upload all pending files concurrently
-    await Promise.all(
+    // Upload all pending files with individual error handling
+    await Promise.allSettled(
       pendingFiles.map((fileItem) =>
         uploadMutation.mutateAsync({ file: fileItem.file, id: fileItem.id })
       )
@@ -230,6 +247,19 @@ export function UploadMedicalRecordDialog() {
   const uploadingCount = files.filter((f) => f.status === "uploading").length
   const successCount = files.filter((f) => f.status === "success").length
   const errorCount = files.filter((f) => f.status === "error").length
+  const retryableErrorCount = files.filter(
+    (f) => f.status === "error" && (f.retryCount || 0) < MAX_RETRY_ATTEMPTS
+  ).length
+
+  const handleRetryAll = useCallback(async () => {
+    const failedFiles = files.filter(
+      (f) => f.status === "error" && (f.retryCount || 0) < MAX_RETRY_ATTEMPTS
+    )
+
+    for (const fileItem of failedFiles) {
+      await retryFile(fileItem.id)
+    }
+  }, [files, retryFile])
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -368,9 +398,30 @@ export function UploadMedicalRecordDialog() {
                           </div>
                         )}
 
-                        {/* Error Message */}
-                        {fileItem.status === "error" && fileItem.error && (
-                          <p className="text-xs text-red-600 mt-2">{fileItem.error}</p>
+                        {/* Error Message with Retry Button */}
+                        {fileItem.status === "error" && (
+                          <div className="mt-2 space-y-2">
+                            {fileItem.error && (
+                              <p className="text-xs text-red-600">{fileItem.error}</p>
+                            )}
+                            {(fileItem.retryCount || 0) < MAX_RETRY_ATTEMPTS && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => retryFile(fileItem.id)}
+                                className="h-7 text-xs border-orange-200 text-orange-700 hover:bg-orange-50"
+                              >
+                                <RotateCw className="w-3 h-3 mr-1" />
+                                Retry Upload
+                                {(fileItem.retryCount || 0) > 0 && (
+                                  <span className="ml-1 text-muted-foreground">
+                                    ({fileItem.retryCount}/{MAX_RETRY_ATTEMPTS})
+                                  </span>
+                                )}
+                              </Button>
+                            )}
+                          </div>
                         )}
 
                         {/* Success Message */}
@@ -415,6 +466,18 @@ export function UploadMedicalRecordDialog() {
                 ? "Close"
                 : "Cancel"}
             </Button>
+
+            {retryableErrorCount > 0 && uploadingCount === 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleRetryAll}
+                className="rounded-xl border-orange-200 text-orange-700 hover:bg-orange-50"
+              >
+                <RotateCw className="w-4 h-4 mr-2" />
+                Retry Failed ({retryableErrorCount})
+              </Button>
+            )}
 
             {pendingCount > 0 && (
               <Button

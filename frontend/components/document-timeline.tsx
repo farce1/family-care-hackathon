@@ -153,7 +153,7 @@ export function DocumentTimeline({ documents, accentColor = "orange" }: Document
                                   variant="outline"
                                   className={cn("text-xs px-1.5 py-0", colors.badge)}
                                 >
-                                  {doc.type}
+                                  {doc.appointment_type}
                                 </Badge>
                                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />
