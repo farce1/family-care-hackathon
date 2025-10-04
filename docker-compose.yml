@@ -19,7 +19,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app
+      - ./backend:/app:cached
     environment:
       - PYTHONUNBUFFERED=1
       - DATABASE_URL=postgresql://familycare:familycare@postgres:5432/familycare

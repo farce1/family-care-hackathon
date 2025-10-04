@@ -7,6 +7,10 @@ while ! nc -z postgres 5432; do
 done
 echo "PostgreSQL started"
 
+# Install dependencies (for development with volume mounts)
+echo "Installing Python dependencies..."
+pip install --no-cache-dir -r requirements.txt
+
 echo "Running database migrations..."
 alembic upgrade head
 
