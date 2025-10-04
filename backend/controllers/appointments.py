@@ -12,6 +12,14 @@ import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
+import logging
+try:
+    import pytesseract
+    from PIL import Image
+    from pdf2image import convert_from_bytes
+    OCR_AVAILABLE = True
+except ImportError:
+    OCR_AVAILABLE = False
 
 # Load environment variables
 load_dotenv()
@@ -90,29 +98,117 @@ async def parse_pdf(file: UploadFile = File(...), current_user: User = Depends(g
         pdf_content = await file.read()
         pdf_file = io.BytesIO(pdf_content)
 
-        # Extract text from PDF
-        pdf_reader = PyPDF2.PdfReader(pdf_file)
-        text_content = ""
+        # Function to extract text with rotation attempts and OCR fallback
+        def extract_text_with_rotation(pdf_bytes):
+            logging.info("Starting text extraction with rotation attempts")
+            rotations = [0, 90, 180, 270, 360]  # Try each rotation up to 360 degrees
 
-        for page in pdf_reader.pages:
-            text_content += page.extract_text() + "\n"
+            for rotation in rotations:
+                logging.info(f"Attempting rotation: {rotation} degrees")
+                try:
+                    # Reset file pointer
+                    pdf_bytes.seek(0)
+                    reader = PyPDF2.PdfReader(pdf_bytes)
+
+                    # If rotation needed, create rotated PDF
+                    if rotation > 0:
+                        logging.debug(f"Applying rotation {rotation} to PDF")
+                        writer = PyPDF2.PdfWriter()
+                        for page in reader.pages:
+                            page.rotate(rotation)
+                            writer.add_page(page)
+
+                        # Write rotated PDF to new BytesIO
+                        rotated_pdf = io.BytesIO()
+                        writer.write(rotated_pdf)
+                        rotated_pdf.seek(0)
+                        reader = PyPDF2.PdfReader(rotated_pdf)
+
+                    # Extract text
+                    text_content = ""
+                    for page in reader.pages:
+                        page_text = page.extract_text()
+                        text_content += page_text + "\n"
+
+                    # Check if we got meaningful text (more than just whitespace)
+                    stripped_content = text_content.strip()
+                    if stripped_content and len(stripped_content) > 10:
+                        logging.info(f"Successfully extracted text with rotation {rotation}, length: {len(stripped_content)}")
+                        return text_content
+
+                    # Try OCR if available and regular extraction failed
+                    if OCR_AVAILABLE:
+                        logging.info(f"Regular extraction failed for rotation {rotation}, attempting OCR")
+                        try:
+                            # Reset file pointer for OCR
+                            pdf_bytes.seek(0)
+                            pdf_data = pdf_bytes.read()
+
+                            # Convert PDF to images for OCR
+                            images = convert_from_bytes(pdf_data, dpi=300)
+                            logging.debug(f"Converted PDF to {len(images)} images for OCR")
+
+                            ocr_text = ""
+                            for i, image in enumerate(images):
+                                # Apply rotation to image if needed
+                                if rotation > 0:
+                                    image = image.rotate(-rotation, expand=True)  # PIL uses counterclockwise rotation
+                                    logging.debug(f"Applied inverse rotation {rotation} to image {i}")
+
+                                # Perform OCR on the image
+                                page_text = pytesseract.image_to_string(image, lang='pol+eng')  # Support Polish and English
+                                ocr_text += page_text + "\n"
+
+                            # Check if OCR extracted meaningful text
+                            stripped_ocr = ocr_text.strip()
+                            if stripped_ocr and len(stripped_ocr) > 20:  # OCR might extract some garbage, so higher threshold
+                                logging.info(f"OCR successful for rotation {rotation}, extracted text length: {len(stripped_ocr)}")
+                                return ocr_text
+                            else:
+                                logging.warning(f"OCR for rotation {rotation} extracted insufficient text (length: {len(stripped_ocr)})")
+
+                        except Exception as ocr_error:
+                            logging.error(f"OCR failed for rotation {rotation}: {str(ocr_error)}")
+                            # OCR failed, continue to next rotation
+                            continue
+
+                except Exception as e:
+                    logging.error(f"Rotation {rotation} failed: {str(e)}")
+                    # If this rotation fails, continue to next rotation
+                    continue
+
+            # If all rotations and OCR attempts failed, return empty string
+            logging.error("All rotation attempts and OCR failed, returning empty string")
+            return ""
+
+        # Extract text from PDF with rotation attempts
+        text_content = extract_text_with_rotation(io.BytesIO(pdf_content))
 
         if not text_content.strip():
-            raise HTTPException(status_code=400, detail="Could not extract text from PDF")
+            raise HTTPException(status_code=400, detail="Could not extract text from PDF even after trying different rotations")
 
         # Use ChatGPT to parse the appointment data
         prompt = f"""
         Extract appointment information from the following medical document text.
+        Return all text in english only.
         Return ONLY a JSON object with exactly these fields:
         - name: Title or name of the appointment/medical report (e.g., "Dermatology Consultation", "Blood Test Results")
         - date: The appointment date in YYYY-MM-DD format (extract from the document)
         - appointment_type: Must be one of these exact values: 'General Checkup', 'Dental', 'Vision', 'Specialist', 'Vaccination', 'Follow-up', 'Emergency', 'Lab Work', 'Physical Therapy', 'Mental Health', 'Veterinary'
-        - summary: Brief summary of the appointment findings, diagnosis, or medical recommendations
+        - summary:
+            Provide a comprehensive expert medical analysis including: patient demographics and history, chief complaint and symptoms, detailed physical examination findings with clinical significance, complete diagnostic test results with normal ranges and interpretation, definitive or differential diagnosis with clinical reasoning, treatment plan with medications (doses, frequencies, duration), preventive measures, lifestyle recommendations, follow-up schedule and monitoring parameters, potential complications or red flags, prognosis and expected outcomes, and any other critical clinical insights or recommendations based on medical expertise.
+
+            + Summarize physical exam findings and what they mean in simple terms (e.g., “Your lungs sounded clear, which means there are no signs of infection.”)
+            + Avoid numeric lab values — instead, explain results conceptually (“Your blood sugar was higher than normal, which can mean…”).
+            + Describe what treatments are recommended and why.
+            + For medications: name, what it does, how often to take it, how long, and common side effects in simple terms.
+            + Include lifestyle advice (diet, exercise, sleep, stress, smoking, alcohol) in positive, encouraging language.
+            + Mention any procedures or therapies and explain what to expect.
         - doctor: Name of the doctor, or name of the medical facility/clinic if doctor name not available
         - confidence_score: A score between 0 and 100 indicating how certain you are about the information you extracted from the document
 
         Document text:
-        {text_content[:4000]}  # Limit text to avoid token limits
+        {text_content[:8000]}  # Limit text to avoid token limits
         """
 
         response = client.chat.completions.create(
