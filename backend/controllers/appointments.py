@@ -8,12 +8,9 @@ from openai import OpenAI
 import io
 from typing import Optional, List
 import sqlalchemy
-from sqlalchemy import create_engine, Column, String, Integer, Date, Text, Boolean, TIMESTAMP, ForeignKey, UUID, BIGINT
-from sqlalchemy.dialects.postgresql import BYTEA
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
-import uuid
 
 # Load environment variables
 load_dotenv()
@@ -26,24 +23,8 @@ DATABASE_URL = "postgresql://familycare:familycare@postgres:5432/familycare"
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-Base = declarative_base()
-
-class ParsedAppointment(Base):
-    __tablename__ = "parsed_appointments"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    original_filename = Column(String(500), nullable=False)
-    name = Column(String(500), nullable=False)
-    date = Column(Date, nullable=False)
-    appointment_type = Column(String(50), nullable=False)
-    summary = Column(Text, nullable=True)
-    doctor = Column(String(255), nullable=True)
-    file_size = Column(BIGINT, nullable=False)
-    raw_file_data = Column(BYTEA, nullable=True)
-    processing_status = Column(String(20), nullable=False, default="completed")
-    confidence_score = Column(Integer, nullable=False, default=0)
-    created_at = Column(TIMESTAMP(timezone=True), default=datetime.utcnow)
-    updated_at = Column(TIMESTAMP(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
+# Import models
+from models import ParsedAppointment
 
 # Dependency to get database session
 def get_db():

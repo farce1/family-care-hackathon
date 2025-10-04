@@ -1,6 +1,6 @@
 """Initial migration - Create appointment-related tables
 
-Revision ID: 001_initial
+Revision ID: 001_initial_migration
 Revises:
 Create Date: 2025-10-03 12:00:00.000000
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '001_initial'
+revision: str = '001_initial_migration'
 down_revision: str = None
 branch_labels: str = None
 depends_on: str = None
