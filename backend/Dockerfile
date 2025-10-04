@@ -3,7 +3,9 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Install system dependencies including OCR tools
-RUN apt-get update && apt-get install -y \
+RUN apt-get update
+
+RUN apt-get install -y \
     netcat-openbsd \
     tesseract-ocr \
     tesseract-ocr-pol \

@@ -20,7 +20,6 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app:cached
-      - ./Test Data:/Test Data:ro
     environment:
       - PYTHONUNBUFFERED=1
       - DATABASE_URL=postgresql://familycare:familycare@postgres:5432/familycare
