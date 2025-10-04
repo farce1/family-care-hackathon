@@ -1,17 +1,16 @@
-import os
-import sys
 from logging.config import fileConfig
-
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-
 from alembic import context
+import sys
+import os
 
-# Add the parent directory to sys.path so we can import our models
-sys.path.insert(0, os.path.dirname(__file__))
+# Add your project to Python path
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-# Import our SQLAlchemy models
-from main import Base
+# Import your models here so Alembic can detect them
+from controllers.appointments import Base, ParsedAppointment
+from controllers.upcoming_appointments import UpcomingAppointment
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -22,10 +21,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
+# Set target_metadata to your Base.metadata so Alembic can auto-generate migrations
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,

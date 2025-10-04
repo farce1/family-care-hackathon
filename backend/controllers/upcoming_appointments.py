@@ -1,26 +1,15 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-import os
-from dotenv import load_dotenv
 from typing import Optional, List
-import sqlalchemy
-from sqlalchemy import create_engine, Column, String, Integer, Date, Text, Boolean, TIMESTAMP, ForeignKey, UUID, BIGINT, \
-    Float
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 import uuid
 
-# Load environment variables
-load_dotenv()
+# Import Base and database setup from appointments controller
+from controllers.appointments import Base, SessionLocal, get_db
 
-# Database setup (reusing the same connection as your main app)
-DATABASE_URL = "postgresql://familycare:familycare@postgres:5432/familycare"
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base = declarative_base()
+# Import SQLAlchemy components for the new model
+from sqlalchemy import Column, String, Integer, Date, Text, Boolean, TIMESTAMP, UUID, Float
 
 
 class UpcomingAppointment(Base):
@@ -35,21 +24,13 @@ class UpcomingAppointment(Base):
     locality = Column(String(255), nullable=False)
     date = Column(Date, nullable=False)
     benefit = Column(String(500), nullable=False)
+    waiting_people = Column(Integer, nullable=False, default=0)
     average_wait_days = Column(Integer, nullable=False, default=0)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(TIMESTAMP(timezone=True), default=datetime.utcnow)
     updated_at = Column(TIMESTAMP(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
-
-
-# Dependency to get database session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 class NFZAppointmentData(BaseModel):
@@ -61,6 +42,7 @@ class NFZAppointmentData(BaseModel):
     locality: str
     date: str  # Will be converted to date format
     benefit: str
+    waitingPeople: int
     averageWaitDays: int
     latitude: Optional[float] = None
     longitude: Optional[float] = None
@@ -76,6 +58,7 @@ class UpcomingAppointmentResponse(BaseModel):
     locality: str
     date: str
     benefit: str
+    waiting_people: int
     average_wait_days: int
     latitude: Optional[float]
     longitude: Optional[float]
@@ -101,16 +84,6 @@ async def upload_nfz_appointments(appointments: List[NFZAppointmentData]):
     """
     Upload a list of NFZ appointments to the database.
     Updates existing records if NFZ ID already exists, creates new ones otherwise.
-
-    Parameters:
-        appointments: List of NFZ appointment data
-
-    Returns:
-        success: Boolean indicating if operation completed
-        total_processed: Total number of appointments processed
-        new_records: Number of new appointments created
-        updated_records: Number of existing appointments updated
-        errors: List of any errors encountered
     """
     if not appointments:
         raise HTTPException(status_code=400, detail="No appointments provided")
@@ -127,7 +100,6 @@ async def upload_nfz_appointments(appointments: List[NFZAppointmentData]):
                 try:
                     appointment_date = datetime.strptime(appointment_data.date, '%Y-%m-%d').date()
                 except ValueError:
-                    # Try alternative date formats if needed
                     try:
                         appointment_date = datetime.strptime(appointment_data.date, '%d-%m-%Y').date()
                     except ValueError:
@@ -149,6 +121,7 @@ async def upload_nfz_appointments(appointments: List[NFZAppointmentData]):
                     existing_appointment.locality = appointment_data.locality
                     existing_appointment.date = appointment_date
                     existing_appointment.benefit = appointment_data.benefit
+                    existing_appointment.waiting_people = appointment_data.waitingPeople
                     existing_appointment.average_wait_days = appointment_data.averageWaitDays
                     existing_appointment.latitude = appointment_data.latitude
                     existing_appointment.longitude = appointment_data.longitude
@@ -167,6 +140,7 @@ async def upload_nfz_appointments(appointments: List[NFZAppointmentData]):
                         locality=appointment_data.locality,
                         date=appointment_date,
                         benefit=appointment_data.benefit,
+                        waiting_people=appointment_data.waitingPeople,
                         average_wait_days=appointment_data.averageWaitDays,
                         latitude=appointment_data.latitude,
                         longitude=appointment_data.longitude,
@@ -207,24 +181,11 @@ async def get_upcoming_appointments(
         max_wait_days: Optional[int] = None,
         active_only: bool = True
 ):
-    """
-    Get upcoming appointments with optional filtering.
-
-    Parameters:
-        locality: Filter by locality/city
-        benefit: Filter by benefit type
-        max_wait_days: Filter by maximum waiting days
-        active_only: Only return active appointments (default: True)
-
-    Returns:
-        List of upcoming appointments matching the filters
-    """
+    """Get upcoming appointments with optional filtering."""
     db = SessionLocal()
     try:
-        # Base query
         query = db.query(UpcomingAppointment)
 
-        # Apply filters
         if active_only:
             query = query.filter(UpcomingAppointment.is_active == True)
 
@@ -237,13 +198,11 @@ async def get_upcoming_appointments(
         if max_wait_days is not None:
             query = query.filter(UpcomingAppointment.average_wait_days <= max_wait_days)
 
-        # Order by date and waiting days
         appointments = query.order_by(
             UpcomingAppointment.date.asc(),
             UpcomingAppointment.average_wait_days.asc()
         ).all()
 
-        # Convert to response format
         response_data = []
         for appointment in appointments:
             response_data.append(UpcomingAppointmentResponse(
@@ -256,6 +215,7 @@ async def get_upcoming_appointments(
                 locality=appointment.locality,
                 date=appointment.date.isoformat(),
                 benefit=appointment.benefit,
+                waiting_people=appointment.waiting_people,
                 average_wait_days=appointment.average_wait_days,
                 latitude=appointment.latitude,
                 longitude=appointment.longitude,
@@ -274,15 +234,7 @@ async def get_upcoming_appointments(
 
 @router.get("/upcoming-appointments/{nfz_id}", response_model=UpcomingAppointmentResponse)
 async def get_upcoming_appointment(nfz_id: str):
-    """
-    Get a specific upcoming appointment by NFZ ID.
-
-    Parameters:
-        nfz_id: The NFZ ID of the appointment
-
-    Returns:
-        The appointment details
-    """
+    """Get a specific upcoming appointment by NFZ ID."""
     db = SessionLocal()
     try:
         appointment = db.query(UpcomingAppointment).filter(
@@ -302,8 +254,9 @@ async def get_upcoming_appointment(nfz_id: str):
             locality=appointment.locality,
             date=appointment.date.isoformat(),
             benefit=appointment.benefit,
+            waiting_people=appointment.waiting_people,
             average_wait_days=appointment.average_wait_days,
-            latitude=appointment.latitude,
+            latitude=apartment.latitude,
             longitude=appointment.longitude,
             is_active=appointment.is_active,
             created_at=appointment.created_at.isoformat(),
@@ -313,6 +266,56 @@ async def get_upcoming_appointment(nfz_id: str):
     except HTTPException:
         raise
     except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    finally:
+        db.close()
+
+
+@router.put("/upcoming-appointments/{nfz_id}/deactivate")
+async def deactivate_appointment(nfz_id: str):
+    """Mark an upcoming appointment as inactive."""
+    db = SessionLocal()
+    try:
+        appointment = db.query(UpcomingAppointment).filter(
+            UpcomingAppointment.nfz_id == nfz_id
+        ).first()
+
+        if not appointment:
+            raise HTTPException(status_code=404, detail="Appointment not found")
+
+        appointment.is_active = False
+        appointment.updated_at = datetime.utcnow()
+        db.commit()
+
+        return JSONResponse(content={"message": "Appointment deactivated successfully"})
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    finally:
+        db.close()
+
+
+@router.delete("/upcoming-appointments")
+async def clear_inactive_appointments():
+    """Delete all inactive appointments from the database."""
+    db = SessionLocal()
+    try:
+        deleted_count = db.query(UpcomingAppointment).filter(
+            UpcomingAppointment.is_active == False
+        ).delete()
+
+        db.commit()
+
+        return JSONResponse(content={
+            "message": f"Deleted {deleted_count} inactive appointments",
+            "deleted_count": deleted_count
+        })
+
+    except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
     finally:
         db.close()
