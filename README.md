@@ -13,6 +13,11 @@
 
 **Family Care** is the perfect comprehensive health management solution designed to keep track of your and your family's complete wellness journey. You no longer will have to search through countless drawers filled with scattered medical papers, remember which specialist you saw last year, or figure out what appointments you need to book next. With Family Care, you can seamlessly manage all of your family's health information, medical history, appointments, medications, and wellness goals in one secure, organized, and easily accessible digital platform. From tracking your toddler's vaccination schedule to managing grandparents' medication routines, Family Care brings clarity and peace of mind to family health management.
 
+## Why use Family Care?
+- Keep all of your medical records in one place
+- Remind yourself of previous and upcoming appointments
+- Check what appointments you should book without having to keep each previous visit in mind
+
 ## **✨ Key Features**
 
 - Securely store your health information in one place
