@@ -21,7 +21,7 @@
 
 ## **🏗️ Architecture** <a name="arch"></a>
 
-- Frontend build in React
+- Frontend build in Next.js
 - FastAPI-based backend
 - PostgreSQL database storing fragile information
 - MCP server for talking to your health data
