@@ -19,7 +19,7 @@
 - Book next appointments through the NFZ API
 - Talk to your data via our MCP server
 
-### **🏗️ Architecture** <a name="arch"></a>
+## **🏗️ Architecture** <a name="arch"></a>
 
 - Frontend build in React
 - FastAPI-based backend
@@ -27,11 +27,11 @@
 - MCP server for talking to your health data
 
 
-### **🚀 Getting Started**
+## **🚀 Getting Started**
 
 Follow these steps to set up Family Care in your environment.
 
-## 🐳 Running with Docker Compose (Recommended)
+### 🐳 Running with Docker Compose (Recommended)
 
 **Prerequisites:**
 - Docker and Docker Compose installed
@@ -69,7 +69,7 @@ Follow these steps to set up Family Care in your environment.
    http://localhost:3000
    ```
 
-## 💻 Running Individually (Development)
+### 💻 Running Individually (Development)
 
 ### Frontend (Next.js)
 
