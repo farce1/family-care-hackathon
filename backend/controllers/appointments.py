@@ -113,7 +113,7 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
 
                     # If rotation needed, create rotated PDF
                     if rotation > 0:
-                        logging.debug(f"Applying rotation {rotation} to PDF")
+                        logging.info(f"Applying rotation {rotation} to PDF")
                         writer = PyPDF2.PdfWriter()
                         for page in reader.pages:
                             page.rotate(rotation)
@@ -147,14 +147,14 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
 
                             # Convert PDF to images for OCR
                             images = convert_from_bytes(pdf_data, dpi=300)
-                            logging.debug(f"Converted PDF to {len(images)} images for OCR")
+                            logging.info(f"Converted PDF to {len(images)} images for OCR")
 
                             ocr_text = ""
                             for i, image in enumerate(images):
                                 # Apply rotation to image if needed
                                 if rotation > 0:
                                     image = image.rotate(-rotation, expand=True)  # PIL uses counterclockwise rotation
-                                    logging.debug(f"Applied inverse rotation {rotation} to image {i}")
+                                    logging.info(f"Applied inverse rotation {rotation} to image {i}")
 
                                 # Perform OCR on the image
                                 page_text = pytesseract.image_to_string(image, lang='pol+eng')  # Support Polish and English
@@ -169,26 +169,31 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
                                 logging.warning(f"OCR for rotation {rotation} extracted insufficient text (length: {len(stripped_ocr)})")
 
                         except Exception as ocr_error:
-                            logging.error(f"OCR failed for rotation {rotation}: {str(ocr_error)}")
+                            logging.info(f"OCR failed for rotation {rotation}: {str(ocr_error)}")
                             # OCR failed, continue to next rotation
                             continue
 
                 except Exception as e:
-                    logging.error(f"Rotation {rotation} failed: {str(e)}")
+                    logging.info(f"Rotation {rotation} failed: {str(e)}")
                     # If this rotation fails, continue to next rotation
                     continue
 
             # If all rotations and OCR attempts failed, return empty string
-            logging.error("All rotation attempts and OCR failed, returning empty string")
+            logging.info("All rotation attempts and OCR failed, returning empty string")
             return ""
 
         # Extract text from PDF with rotation attempts
+        logging.info(f"Starting PDF processing for file: {file.filename}")
         text_content = extract_text_with_rotation(io.BytesIO(pdf_content))
 
         if not text_content.strip():
+            logging.info(f"Failed to extract any text from PDF: {file.filename}")
             raise HTTPException(status_code=400, detail="Could not extract text from PDF even after trying different rotations")
 
+        logging.info(f"Successfully extracted text from PDF, length: {len(text_content.strip())}")
+
         # Use ChatGPT to parse the appointment data
+        logging.info("Preparing ChatGPT prompt for appointment data extraction")
         prompt = f"""
         Extract appointment information from the following medical document text.
         Return all text in english only.
@@ -199,8 +204,8 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
         - summary:
             Provide a comprehensive expert medical analysis including: patient demographics and history, chief complaint and symptoms, detailed physical examination findings with clinical significance, complete diagnostic test results with normal ranges and interpretation, definitive or differential diagnosis with clinical reasoning, treatment plan with medications (doses, frequencies, duration), preventive measures, lifestyle recommendations, follow-up schedule and monitoring parameters, potential complications or red flags, prognosis and expected outcomes, and any other critical clinical insights or recommendations based on medical expertise.
 
-            + Summarize physical exam findings and what they mean in simple terms (e.g., “Your lungs sounded clear, which means there are no signs of infection.”)
-            + Avoid numeric lab values — instead, explain results conceptually (“Your blood sugar was higher than normal, which can mean…”).
+            + Summarize physical exam findings and what they mean in simple terms (e.g., "Your lungs sounded clear, which means there are no signs of infection.")
+            + Avoid numeric lab values — instead, explain results conceptually ("Your blood sugar was higher than normal, which can mean…").
             + Describe what treatments are recommended and why.
             + For medications: name, what it does, how often to take it, how long, and common side effects in simple terms.
             + Include lifestyle advice (diet, exercise, sleep, stress, smoking, alcohol) in positive, encouraging language.
@@ -209,41 +214,54 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
         - confidence_score: A score between 0 and 100 indicating how certain you are about the information you extracted from the document
 
         Document text:
-        {text_content[:8000]}  # Limit text to avoid token limits
+        {text_content[:15000]}  # Limit text to avoid token limits
         """
 
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a medical document parser. Always return valid JSON."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.1,  # Low temperature for consistent parsing
-            max_tokens=200
-        )
+        logging.info("Making ChatGPT API call for appointment parsing")
+        try:
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a medical document parser. Always return valid JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.1,  # Low temperature for consistent parsing
+                max_tokens=4096
+            )
+            logging.info("ChatGPT API call successful")
+        except Exception as e:
+            logging.info(f"ChatGPT API call failed: {str(e)}")
+            raise HTTPException(status_code=500, detail="Failed to process document with AI service")
 
         # Parse the response
         result_text = response.choices[0].message.content.strip()
+        logging.info(f"Raw ChatGPT response: {result_text[:500]}...")
 
         # Try to extract JSON from the response
         import json
+        logging.info("Parsing JSON response from ChatGPT")
         try:
             # Remove any markdown formatting if present
             if result_text.startswith("```json"):
+                logging.info("Removing markdown formatting from JSON response")
                 result_text = result_text[7:]
             if result_text.endswith("```"):
                 result_text = result_text[:-3]
 
             parsed_data = json.loads(result_text.strip())
+            logging.info("Successfully parsed JSON response")
 
             # Add file size to the response
             parsed_data['file_size'] = len(pdf_content)
+            logging.info(f"Added file size: {len(pdf_content)} bytes")
 
             # Get confidence score
             confidence_score = parsed_data.get('confidence_score', 0)
+            logging.info(f"Extracted confidence score: {confidence_score}")
 
             # Check if confidence score is below 51 - return error
             if confidence_score < 51:
+                logging.warning(f"Low confidence score: {confidence_score}, rejecting appointment data")
                 raise HTTPException(
                     status_code=400,
                     detail=f"Low confidence score ({confidence_score}). Unable to reliably extract appointment information."
@@ -254,10 +272,13 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
             missing_fields = [field for field in required_fields if not parsed_data.get(field, '').strip()]
 
             if missing_fields:
+                logging.warning(f"Missing required fields: {missing_fields}, confidence: {confidence_score}")
                 raise HTTPException(
                     status_code=400,
                     detail=f"Missing required fields: {', '.join(missing_fields)}. Confidence score: {confidence_score}"
                 )
+
+            logging.info("All required fields present and confidence score acceptable")
 
             # Handle appointment_type logic
             valid_types = [
@@ -266,43 +287,59 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
             ]
 
             appointment_type = parsed_data.get('appointment_type', '').strip()
+            logging.info(f"Original appointment type: '{appointment_type}'")
 
             # If appointment_type is missing or invalid, and confidence is high enough, set to "Other"
             if not appointment_type or appointment_type not in valid_types[:-1]:  # Exclude "Other" from invalid check
                 if confidence_score > 51:
                     parsed_data['appointment_type'] = 'Other'
+                    logging.info("Set appointment type to 'Other' due to high confidence score")
                 else:
+                    logging.warning(f"Cannot determine appointment type and confidence ({confidence_score}) too low to use 'Other'")
                     raise HTTPException(
                         status_code=409,
                         detail=f"Cannot determine appointment type and confidence score ({confidence_score}) is not high enough to use 'Other'"
                     )
             elif appointment_type not in valid_types:
                 # This shouldn't happen with the above logic, but just in case
+                logging.info(f"Invalid appointment type after validation: {appointment_type}")
                 raise HTTPException(
                     status_code=409,
                     detail=f"Invalid appointment type: {appointment_type}"
                 )
 
+            logging.info(f"Final appointment type: {parsed_data['appointment_type']}")
+
             # Validate date format (basic check)
             date_str = parsed_data.get('date', '').strip()
+            logging.info(f"Original date: '{date_str}'")
             if not date_str or len(date_str.split('-')) != 3:
                 parsed_data['date'] = datetime.now().strftime('%Y-%m-%d')
+                logging.warning(f"Invalid date format, using current date: {parsed_data['date']}")
+            else:
+                logging.info(f"Valid date format: {date_str}")
 
             appointment_data = AppointmentData(**parsed_data)
+            logging.info("Successfully created AppointmentData object")
 
         except (json.JSONDecodeError, ValueError) as e:
             # Fallback if JSON parsing fails - this represents low confidence
+            logging.info(f"Failed to parse JSON response: {str(e)}")
+            logging.info(f"Raw response that failed parsing: {result_text[:1000]}")
             raise HTTPException(
                 status_code=400,
                 detail="Failed to parse JSON response from AI service. Unable to extract appointment information."
             )
 
         # Always save to database
+        logging.info("Saving appointment data to database")
         try:
             # Get default MCP user for no-auth operations
+            logging.info("Getting default MCP user")
             default_user = get_default_mcp_user(db)
 
             # Create database record with default user reference
+            logging.info("Creating ParsedAppointment database record")
             db_appointment = ParsedAppointment(
                 user_id=default_user.id,
                 original_filename=file.filename,
@@ -318,22 +355,30 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
             )
 
             # Save to database using the injected session
+            logging.info("Adding appointment to database session")
             db.add(db_appointment)
+            logging.info("Committing database transaction")
             db.commit()
             db.refresh(db_appointment)
+
+            logging.info(f"Successfully saved appointment to database with ID: {db_appointment.id}")
 
             # Add the database ID to the response
             response_data = appointment_data.model_dump()
             response_data['id'] = str(db_appointment.id)
+            logging.info("Appointment processing completed successfully")
             return JSONResponse(content=response_data)
 
         except Exception as e:
+            logging.info(f"Database operation failed: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
     except HTTPException:
         # Re-raise HTTPExceptions as they already have the correct status code
+        logging.info("HTTPException raised during appointment processing")
         raise
     except Exception as e:
+        logging.info(f"Unexpected error during PDF processing: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error processing PDF: {str(e)}")
 
 @router.get("/parsed-appointments", response_model=List[ParsedAppointmentResponse])
