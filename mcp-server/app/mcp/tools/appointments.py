@@ -10,7 +10,6 @@ from fastmcp import FastMCP
 from pydantic import BaseModel
 
 from app.config import settings
-from app.mcp.tools.auth import _auth_token
 
 appointments_router = FastMCP(name="Appointments")
 
@@ -26,14 +25,6 @@ class ParsedAppointment(BaseModel):
     original_filename: str
     file_size: int
     created_at: str
-
-
-def get_auth_headers() -> dict:
-    """Get authorization headers if token is available."""
-    global _auth_token
-    if _auth_token:
-        return {"Authorization": f"Bearer {_auth_token}"}
-    return {}
 
 
 @appointments_router.tool
@@ -69,7 +60,7 @@ async def parse_pdf_appointment(file_path: str) -> dict:
             response = await client.post(
                 f"{settings.backend_url}/parse-pdf",
                 files=files,
-                headers=get_auth_headers()
+                
             )
 
             if response.status_code == 200:
@@ -128,7 +119,7 @@ async def list_parsed_appointments(
             response = await client.get(
                 f"{settings.backend_url}/parsed-appointments",
                 params=params,
-                headers=get_auth_headers()
+                
             )
 
             if response.status_code == 200:

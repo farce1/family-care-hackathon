@@ -25,6 +25,7 @@ The MCP server exposes the following tool categories:
 - `deactivate_appointment` - Mark an appointment as cancelled/completed
 - `clear_all_upcoming_appointments` - Delete all upcoming appointments
 - `get_next_appointments` - Get the next N upcoming appointments
+- `fetch_nfz_appointments` - Fetch real-time available appointments from NFZ API by medical specialty
 
 ## Installation
 
@@ -74,6 +75,8 @@ Example prompts:
 - "Show me my upcoming medical appointments"
 - "Parse this medical PDF and extract appointment information"
 - "Search for appointments with Dr. Smith"
+- "Find available cardiology appointments in NFZ system"
+- "Fetch available appointments for PORADNIA ALERGOLOGICZNA"
 
 ## Development
 

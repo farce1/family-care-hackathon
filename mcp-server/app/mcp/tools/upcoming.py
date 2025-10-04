@@ -61,7 +61,7 @@ async def upload_nfz_appointments(file_path: str) -> dict:
             response = await client.post(
                 f"{settings.backend_url}/upload-nfz-appointments",
                 files=files,
-                headers=get_auth_headers()
+                
             )
 
             if response.status_code == 200:
@@ -127,7 +127,7 @@ async def list_upcoming_appointments(
             response = await client.get(
                 f"{settings.backend_url}/upcoming-appointments",
                 params=params,
-                headers=get_auth_headers()
+                
             )
 
             if response.status_code == 200:
@@ -165,7 +165,7 @@ async def get_upcoming_appointment(nfz_id: str) -> dict:
         try:
             response = await client.get(
                 f"{settings.backend_url}/upcoming-appointments/{nfz_id}",
-                headers=get_auth_headers()
+                
             )
 
             if response.status_code == 200:
@@ -206,7 +206,7 @@ async def deactivate_appointment(nfz_id: str) -> dict:
         try:
             response = await client.put(
                 f"{settings.backend_url}/upcoming-appointments/{nfz_id}/deactivate",
-                headers=get_auth_headers()
+                
             )
 
             if response.status_code == 200:
@@ -245,7 +245,7 @@ async def clear_all_upcoming_appointments() -> dict:
         try:
             response = await client.delete(
                 f"{settings.backend_url}/upcoming-appointments",
-                headers=get_auth_headers()
+                
             )
 
             if response.status_code == 200:
@@ -302,3 +302,76 @@ async def get_next_appointments(count: int = 5) -> dict:
         "found_count": len(next_appointments),
         "appointments": next_appointments
     }
+
+
+@upcoming_router.tool
+async def fetch_nfz_appointments(
+    benefit: str,
+    page: int = 1,
+    limit: int = 10,
+    province: str = "01"
+) -> dict:
+    """
+    Fetch available appointments directly from NFZ (Polish National Health Fund) API.
+    This retrieves real-time appointment availability for a specific medical specialty.
+
+    Args:
+        benefit: Medical specialty/benefit type (e.g., "PORADNIA ALERGOLOGICZNA", "PORADNIA KARDIOLOGICZNA")
+        page: Page number for pagination (default: 1)
+        limit: Number of results per page (default: 10, max: 100)
+        province: Province code (default: "01" for Dolnośląskie)
+
+    Returns:
+        Dictionary with list of available appointments including provider, location, date, and wait times
+
+    Examples:
+        Fetch allergology appointments:
+        >>> fetch_nfz_appointments(benefit="PORADNIA ALERGOLOGICZNA")
+
+        Fetch cardiology appointments with more results:
+        >>> fetch_nfz_appointments(benefit="PORADNIA KARDIOLOGICZNA", limit=20)
+    """
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            # Build query parameters
+            params = {
+                'benefit': benefit,
+                'page': page,
+                'limit': limit,
+                'province': province
+            }
+
+            response = await client.get(
+                f"{settings.backend_url}/fetch_nfz_appointments",
+                params=params
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                appointments = data.get("appointments", [])
+
+                return {
+                    "status": "success",
+                    "benefit": benefit,
+                    "total": data.get("total", 0),
+                    "count": len(appointments),
+                    "page": page,
+                    "limit": limit,
+                    "appointments": appointments
+                }
+            else:
+                return {
+                    "status": "error",
+                    "message": f"Failed to fetch NFZ appointments: {response.text}",
+                    "status_code": response.status_code
+                }
+        except httpx.TimeoutException:
+            return {
+                "status": "error",
+                "message": "Request timed out while fetching NFZ appointments. The NFZ API may be slow or unavailable."
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Failed to connect to backend: {str(e)}"
+            }
