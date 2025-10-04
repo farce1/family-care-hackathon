@@ -36,7 +36,7 @@ function transformToDocument(appointment: ParsedAppointment): Document {
   return {
     id: appointment.id,
     title: appointment.name,
-    type: mapAppointmentTypeToDocumentType(appointment.appointment_type),
+    appointment_type: mapAppointmentTypeToDocumentType(appointment.appointment_type),
     date: new Date(appointment.date),
     description: appointment.summary || undefined,
     fileSize: formatFileSize(appointment.file_size),

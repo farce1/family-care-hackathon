@@ -125,7 +125,7 @@ export function DocumentTimeline({ documents, accentColor = "orange" }: Document
             {/* Documents for this month */}
             <div className="ml-[68px] space-y-3">
               {group.documents.map((doc) => {
-                const colors = getDocumentTypeColor(doc.type);
+                const colors = getDocumentTypeColor(doc.appointment_type);
 
                 return (
                   <Card
@@ -137,7 +137,7 @@ export function DocumentTimeline({ documents, accentColor = "orange" }: Document
                         {/* Document Icon */}
                         <div className={cn("p-2 rounded-lg shrink-0", colors.bg)}>
                           <div className={colors.text}>
-                            {getDocumentIcon(doc.type)}
+                            {getDocumentIcon(doc.appointment_type)}
                           </div>
                         </div>
 

@@ -68,7 +68,7 @@ export const currentUserDocuments: Document[] = [
   {
     id: "doc-1",
     title: "Annual Physical Examination",
-    type: "Medical Record",
+    appointment_type: "Medical Record",
     date: new Date("2025-09-15"),
     description: "Complete physical examination with blood work",
     fileSize: "2.4 MB",
@@ -77,7 +77,7 @@ export const currentUserDocuments: Document[] = [
   {
     id: "doc-2",
     title: "Blood Pressure Medication",
-    type: "Prescription",
+    appointment_type: "Prescription",
     date: new Date("2025-09-20"),
     description: "Amlodipine 5mg - Take once daily",
     fileSize: "156 KB",
@@ -86,7 +86,7 @@ export const currentUserDocuments: Document[] = [
   {
     id: "doc-3",
     title: "Cholesterol Test Results",
-    type: "Lab Result",
+    appointment_type: "Lab Result",
     date: new Date("2025-08-10"),
     description: "Lipid panel - All values within normal range",
     fileSize: "892 KB",
@@ -95,7 +95,7 @@ export const currentUserDocuments: Document[] = [
   {
     id: "doc-4",
     title: "COVID-19 Booster",
-    type: "Vaccination",
+    appointment_type: "Vaccination",
     date: new Date("2025-08-05"),
     description: "Pfizer-BioNTech booster dose",
     fileSize: "445 KB",
@@ -104,7 +104,7 @@ export const currentUserDocuments: Document[] = [
   {
     id: "doc-5",
     title: "Chest X-Ray",
-    type: "Imaging",
+    appointment_type: "Imaging",
     date: new Date("2025-06-22"),
     description: "Routine chest radiograph - Clear",
     fileSize: "5.2 MB",
@@ -113,7 +113,7 @@ export const currentUserDocuments: Document[] = [
   {
     id: "doc-6",
     title: "Dental Checkup",
-    type: "Medical Record",
+    appointment_type: "Medical Record",
     date: new Date("2025-06-10"),
     description: "Routine dental examination and cleaning",
     fileSize: "1.1 MB",
@@ -122,7 +122,7 @@ export const currentUserDocuments: Document[] = [
   {
     id: "doc-7",
     title: "Vision Test",
-    type: "Medical Record",
+    appointment_type: "Medical Record",
     date: new Date("2025-04-15"),
     description: "Annual eye examination",
     fileSize: "678 KB",
@@ -131,7 +131,7 @@ export const currentUserDocuments: Document[] = [
   {
     id: "doc-8",
     title: "Flu Vaccination",
-    type: "Vaccination",
+    appointment_type: "Vaccination",
     date: new Date("2025-03-20"),
     description: "Seasonal influenza vaccine",
     fileSize: "312 KB",
@@ -140,7 +140,7 @@ export const currentUserDocuments: Document[] = [
   {
     id: "doc-9",
     title: "Allergy Test Results",
-    type: "Lab Result",
+    appointment_type: "Lab Result",
     date: new Date("2025-02-28"),
     description: "Comprehensive allergy panel",
     fileSize: "1.8 MB",
@@ -149,7 +149,7 @@ export const currentUserDocuments: Document[] = [
   {
     id: "doc-10",
     title: "Health Insurance Card",
-    type: "Insurance",
+    appointment_type: "Insurance",
     date: new Date("2025-01-05"),
     description: "NFZ health insurance documentation",
     fileSize: "234 KB",
@@ -164,7 +164,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "nat-1",
       title: "Prenatal Checkup",
-      type: "Medical Record",
+      appointment_type: "Medical Record",
       date: new Date("2025-09-25"),
       description: "Routine prenatal examination",
       fileSize: "1.5 MB",
@@ -173,7 +173,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "nat-2",
       title: "Ultrasound Results",
-      type: "Imaging",
+      appointment_type: "Imaging",
       date: new Date("2025-09-10"),
       description: "Second trimester ultrasound",
       fileSize: "8.3 MB",
@@ -182,7 +182,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "nat-3",
       title: "Vitamin D Prescription",
-      type: "Prescription",
+      appointment_type: "Prescription",
       date: new Date("2025-08-15"),
       description: "Vitamin D3 2000 IU daily",
       fileSize: "145 KB",
@@ -191,7 +191,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "nat-4",
       title: "Blood Work Results",
-      type: "Lab Result",
+      appointment_type: "Lab Result",
       date: new Date("2025-07-20"),
       description: "Complete metabolic panel",
       fileSize: "956 KB",
@@ -200,7 +200,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "nat-5",
       title: "Mammogram",
-      type: "Imaging",
+      appointment_type: "Imaging",
       date: new Date("2025-06-05"),
       description: "Annual screening mammogram - Normal",
       fileSize: "6.7 MB",
@@ -209,7 +209,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "nat-6",
       title: "Thyroid Function Test",
-      type: "Lab Result",
+      appointment_type: "Lab Result",
       date: new Date("2025-05-12"),
       description: "TSH and T4 levels - Normal range",
       fileSize: "423 KB",
@@ -218,7 +218,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "nat-7",
       title: "Dermatology Consultation",
-      type: "Medical Record",
+      appointment_type: "Medical Record",
       date: new Date("2025-03-08"),
       description: "Skin examination and mole check",
       fileSize: "2.1 MB",
@@ -227,7 +227,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "nat-8",
       title: "Pap Smear Results",
-      type: "Lab Result",
+      appointment_type: "Lab Result",
       date: new Date("2025-02-14"),
       description: "Cervical cancer screening - Negative",
       fileSize: "567 KB",
@@ -239,7 +239,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "oli-1",
       title: "School Physical Exam",
-      type: "Medical Record",
+      appointment_type: "Medical Record",
       date: new Date("2025-09-01"),
       description: "Required school health examination",
       fileSize: "1.2 MB",
@@ -248,7 +248,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "oli-2",
       title: "Growth Chart Update",
-      type: "Medical Record",
+      appointment_type: "Medical Record",
       date: new Date("2025-08-20"),
       description: "Height and weight measurements",
       fileSize: "345 KB",
@@ -257,7 +257,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "oli-3",
       title: "Dental Sealants",
-      type: "Medical Record",
+      appointment_type: "Medical Record",
       date: new Date("2025-07-15"),
       description: "Preventive dental sealant application",
       fileSize: "876 KB",
@@ -266,7 +266,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "oli-4",
       title: "Vision Screening",
-      type: "Medical Record",
+      appointment_type: "Medical Record",
       date: new Date("2025-06-10"),
       description: "School vision test - 20/20",
       fileSize: "234 KB",
@@ -275,7 +275,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "oli-5",
       title: "Tetanus Booster",
-      type: "Vaccination",
+      appointment_type: "Vaccination",
       date: new Date("2025-05-03"),
       description: "Tdap vaccine booster",
       fileSize: "298 KB",
@@ -284,7 +284,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "oli-6",
       title: "Allergy Medication",
-      type: "Prescription",
+      appointment_type: "Prescription",
       date: new Date("2025-04-12"),
       description: "Cetirizine 10mg for seasonal allergies",
       fileSize: "167 KB",
@@ -293,7 +293,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "oli-7",
       title: "Sports Physical",
-      type: "Medical Record",
+      appointment_type: "Medical Record",
       date: new Date("2025-03-05"),
       description: "Clearance for school sports activities",
       fileSize: "945 KB",
@@ -302,7 +302,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "oli-8",
       title: "Flu Vaccine",
-      type: "Vaccination",
+      appointment_type: "Vaccination",
       date: new Date("2025-02-18"),
       description: "Annual influenza vaccination",
       fileSize: "289 KB",
@@ -314,7 +314,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "mar-1",
       title: "Asthma Checkup",
-      type: "Medical Record",
+      appointment_type: "Medical Record",
       date: new Date("2025-09-12"),
       description: "Routine asthma management visit",
       fileSize: "1.6 MB",
@@ -323,7 +323,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "mar-2",
       title: "Inhaler Prescription",
-      type: "Prescription",
+      appointment_type: "Prescription",
       date: new Date("2025-09-12"),
       description: "Albuterol inhaler - Use as needed",
       fileSize: "178 KB",
@@ -332,7 +332,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "mar-3",
       title: "Peanut Allergy Test",
-      type: "Lab Result",
+      appointment_type: "Lab Result",
       date: new Date("2025-07-08"),
       description: "Confirmed peanut allergy - IgE elevated",
       fileSize: "734 KB",
@@ -341,7 +341,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "mar-4",
       title: "EpiPen Prescription",
-      type: "Prescription",
+      appointment_type: "Prescription",
       date: new Date("2025-07-08"),
       description: "Emergency epinephrine auto-injector",
       fileSize: "256 KB",
@@ -350,7 +350,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "mar-5",
       title: "Well-Child Visit",
-      type: "Medical Record",
+      appointment_type: "Medical Record",
       date: new Date("2025-06-15"),
       description: "6-year checkup and development assessment",
       fileSize: "2.3 MB",
@@ -359,7 +359,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "mar-6",
       title: "Ear Infection Treatment",
-      type: "Prescription",
+      appointment_type: "Prescription",
       date: new Date("2025-04-20"),
       description: "Amoxicillin for acute otitis media",
       fileSize: "145 KB",
@@ -368,7 +368,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "mar-7",
       title: "Swimming Physical",
-      type: "Medical Record",
+      appointment_type: "Medical Record",
       date: new Date("2025-03-10"),
       description: "Medical clearance for swimming lessons",
       fileSize: "567 KB",
@@ -377,7 +377,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "mar-8",
       title: "MMR Vaccination",
-      type: "Vaccination",
+      appointment_type: "Vaccination",
       date: new Date("2025-01-25"),
       description: "Measles, mumps, rubella booster",
       fileSize: "312 KB",
@@ -389,7 +389,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "man-1",
       title: "Annual Veterinary Exam",
-      type: "Medical Record",
+      appointment_type: "Medical Record",
       date: new Date("2025-09-05"),
       description: "Complete physical examination - Good health",
       fileSize: "1.8 MB",
@@ -398,7 +398,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "man-2",
       title: "Rabies Vaccination",
-      type: "Vaccination",
+      appointment_type: "Vaccination",
       date: new Date("2025-09-05"),
       description: "Annual rabies vaccine booster",
       fileSize: "234 KB",
@@ -407,7 +407,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "man-3",
       title: "Dental Cleaning",
-      type: "Medical Record",
+      appointment_type: "Medical Record",
       date: new Date("2025-06-18"),
       description: "Professional dental cleaning under anesthesia",
       fileSize: "3.2 MB",
@@ -416,7 +416,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "man-4",
       title: "Heartworm Prevention",
-      type: "Prescription",
+      appointment_type: "Prescription",
       date: new Date("2025-05-10"),
       description: "Monthly heartworm preventive medication",
       fileSize: "189 KB",
@@ -425,7 +425,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "man-5",
       title: "Blood Work Panel",
-      type: "Lab Result",
+      appointment_type: "Lab Result",
       date: new Date("2025-04-22"),
       description: "Senior wellness blood panel - All normal",
       fileSize: "645 KB",
@@ -434,7 +434,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "man-6",
       title: "DHPP Vaccination",
-      type: "Vaccination",
+      appointment_type: "Vaccination",
       date: new Date("2025-03-15"),
       description: "Distemper, hepatitis, parainfluenza, parvovirus",
       fileSize: "267 KB",
@@ -443,7 +443,7 @@ export const familyMemberDocuments: Record<string, Document[]> = {
     {
       id: "man-7",
       title: "Skin Condition Treatment",
-      type: "Prescription",
+      appointment_type: "Prescription",
       date: new Date("2025-02-08"),
       description: "Medicated shampoo for dermatitis",
       fileSize: "156 KB",

@@ -5,7 +5,7 @@
 export interface Document {
   id: string;
   title: string;
-  type: DocumentType;
+  appointment_type: DocumentType;
   date: Date;
   description?: string;
   fileUrl?: string;
