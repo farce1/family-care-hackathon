@@ -1,5 +1,12 @@
 # Family Care
 
+## 📋 Table of Contents
+
+- [🔍 About](#-about-the-project)
+- [🏗️ Architecture](#-architecture)
+- [🚀 Getting Started](#-getting-started)
+- [📄 License](#-license)
+
 ## 🔍 About The Project
 
 **Family Care** is the perfect way to keep track of your and your family's health. You no longer will have to search through your drawers, try to decode any details, and figure out what appointments you need to book. With Family Care, you can do all of that in one place!
@@ -48,3 +55,7 @@ Installation & Setup
   ```
    http://localhost:3000
   ```
+
+## 📄 License
+
+Distributed under the MIT License. See [MIT License](LICENSE) for more information.
