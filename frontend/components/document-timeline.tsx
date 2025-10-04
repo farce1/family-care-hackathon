@@ -1,9 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { Document } from "@/types/document";
 import { groupDocumentsByMonth, formatShortDate, getDocumentTypeColor } from "@/lib/document-utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   FileText,
   Pill,
@@ -51,6 +59,7 @@ function getDocumentIcon(type: string) {
  */
 export function DocumentTimeline({ documents, accentColor = "orange" }: DocumentTimelineProps) {
   const documentGroups = groupDocumentsByMonth(documents);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
 
   if (documentGroups.length === 0) {
     return (
@@ -130,7 +139,8 @@ export function DocumentTimeline({ documents, accentColor = "orange" }: Document
                 return (
                   <Card
                     key={doc.id}
-                    className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 border-border bg-white/80 backdrop-blur-sm overflow-hidden"
+                    className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 border-border bg-white/80 backdrop-blur-sm overflow-hidden cursor-pointer"
+                    onClick={() => setSelectedDocument(doc)}
                   >
                     <CardContent className="p-3">
                       <div className="flex items-start gap-3">
@@ -170,7 +180,8 @@ export function DocumentTimeline({ documents, accentColor = "orange" }: Document
                                   ? "hover:bg-orange-50 text-orange-600"
                                   : "hover:bg-amber-50 text-amber-600"
                               )}
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 // Handle download - placeholder for now
                                 console.log("Download", doc.id);
                               }}
@@ -211,6 +222,104 @@ export function DocumentTimeline({ documents, accentColor = "orange" }: Document
           </div>
         ))}
       </div>
+
+      {/* Document Details Dialog */}
+      <Dialog open={!!selectedDocument} onOpenChange={(open) => !open && setSelectedDocument(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          {selectedDocument && (
+            <>
+              <DialogHeader>
+                <div className="flex items-start gap-3 mb-2">
+                  <div className={cn(
+                    "p-2 rounded-lg shrink-0",
+                    getDocumentTypeColor(selectedDocument.appointment_type).bg
+                  )}>
+                    <div className={getDocumentTypeColor(selectedDocument.appointment_type).text}>
+                      {getDocumentIcon(selectedDocument.appointment_type)}
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <DialogTitle className="text-xl mb-2">{selectedDocument.title}</DialogTitle>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-xs",
+                          getDocumentTypeColor(selectedDocument.appointment_type).badge
+                        )}
+                      >
+                        {selectedDocument.appointment_type}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {formatShortDate(selectedDocument.date)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                {/* Full Description */}
+                {selectedDocument.description && (
+                  <div>
+                    <h4 className="text-sm font-semibold mb-2 text-foreground">Summary</h4>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                      {selectedDocument.description}
+                    </p>
+                  </div>
+                )}
+
+                {/* Metadata */}
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-semibold mb-3 text-foreground">Document Information</h4>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    {selectedDocument.fileSize && (
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">File Size</p>
+                          <p className="font-medium">{selectedDocument.fileSize}</p>
+                        </div>
+                      </div>
+                    )}
+                    {selectedDocument.uploadedBy && (
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Uploaded By</p>
+                          <p className="font-medium">{selectedDocument.uploadedBy}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Download Button */}
+                {selectedDocument.fileUrl && (
+                  <div className="border-t pt-4">
+                    <button
+                      className={cn(
+                        "w-full py-2 px-4 rounded-md font-medium transition-colors flex items-center justify-center gap-2",
+                        accentColor === "orange"
+                          ? "bg-orange-500 hover:bg-orange-600 text-white"
+                          : "bg-amber-500 hover:bg-amber-600 text-white"
+                      )}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log("Download", selectedDocument.id);
+                      }}
+                    >
+                      <Download className="w-4 h-4" />
+                      Download Document
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
