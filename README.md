@@ -3,7 +3,7 @@
 ## 📋 Table of Contents
 
 - [🔍 About](#-about-the-project)
-- [🏗️ Architecture](#-architecture)
+- [🏗️ Architecture](#arch)
 - [🚀 Getting Started](#-getting-started)
 - [📄 License](#-license)
 
@@ -14,12 +14,12 @@
 ### **✨ Key Features**
 
 - Securely store your health information in one place
-- Keep the details of your and your family's past appointments by uploading PDFs of your medical records
+- Keep the details of you and your family's past appointments by uploading PDFs of your medical records
 - Be reminded of outdated medical statistics
 - Book next appointments through the NFZ API
 - Talk to your data via our MCP server
 
-### **🏗️ Architecture**
+### **🏗️ Architecture** <a name="arch"></a>
 
 - Frontend build in React
 - FastAPI-based backend
