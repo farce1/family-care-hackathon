@@ -14,9 +14,6 @@
 **Family Care** is the perfect comprehensive health management solution designed to keep track of your and your family's complete wellness journey. You no longer will have to search through countless drawers filled with scattered medical papers, remember which specialist you saw last year, or figure out what appointments you need to book next. With Family Care, you can seamlessly manage all of your family's health information, medical history, appointments, medications, and wellness goals in one secure, organized, and easily accessible digital platform. From tracking your toddler's vaccination schedule to managing grandparents' medication routines, Family Care brings clarity and peace of mind to family health management.
 
 ### 🎥 Product Presentation
-
-Check out our product presentation video: [vid.mp4](./vid.mp4)
-
 **Trusted by Industry Leaders:**
 [Momentum.ai](https://www.linkedin.com/posts/the-momentum-ai_hackathon-momentum-healthcareinnovation-activity-7382384274559193088-vaNH?utm_source=share&utm_medium=member_desktop&rcm=ACoAACjFEB0BJ5pt0LFZiBV_tbahZY06xQsza8g) recognized and trusted the idea behind Family Care.
 
