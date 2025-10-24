@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { useRef } from "react"
-import { AnimatedBeam } from "@/components/ui/animated-beam"
-import { Heart, FileText, Calendar, Pill, Activity, Users, Bell, Shield } from "lucide-react"
+import { useRef } from "react";
+import { AnimatedBeam } from "@/components/ui/animated-beam";
+import { Heart, FileText, Calendar, Pill, Activity, Users, Bell, Shield } from "lucide-react";
 
 const Circle = ({
   className,
   children,
   nodeRef,
 }: {
-  className?: string
-  children?: React.ReactNode
-  nodeRef?: React.RefObject<HTMLDivElement | null>
+  className?: string;
+  children?: React.ReactNode;
+  nodeRef?: React.RefObject<HTMLDivElement | null>;
 }) => {
   return (
     <div
@@ -20,20 +20,20 @@ const Circle = ({
     >
       {children}
     </div>
-  )
-}
+  );
+};
 
 export function FamilyHealthDiagram() {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const centerRef = useRef<HTMLDivElement>(null)
-  const node1Ref = useRef<HTMLDivElement>(null)
-  const node2Ref = useRef<HTMLDivElement>(null)
-  const node3Ref = useRef<HTMLDivElement>(null)
-  const node4Ref = useRef<HTMLDivElement>(null)
-  const node5Ref = useRef<HTMLDivElement>(null)
-  const node6Ref = useRef<HTMLDivElement>(null)
-  const node7Ref = useRef<HTMLDivElement>(null)
-  const node8Ref = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null);
+  const centerRef = useRef<HTMLDivElement>(null);
+  const node1Ref = useRef<HTMLDivElement>(null);
+  const node2Ref = useRef<HTMLDivElement>(null);
+  const node3Ref = useRef<HTMLDivElement>(null);
+  const node4Ref = useRef<HTMLDivElement>(null);
+  const node5Ref = useRef<HTMLDivElement>(null);
+  const node6Ref = useRef<HTMLDivElement>(null);
+  const node7Ref = useRef<HTMLDivElement>(null);
+  const node8Ref = useRef<HTMLDivElement>(null);
 
   return (
     <div
@@ -245,5 +245,5 @@ export function FamilyHealthDiagram() {
         delay={3}
       />
     </div>
-  )
+  );
 }

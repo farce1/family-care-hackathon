@@ -1,9 +1,9 @@
-import pytest
-import json
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
-from fastapi.testclient import TestClient
-from fastapi import UploadFile
 import io
+import json
+from unittest.mock import Mock, patch
+
+import pytest
+from fastapi.testclient import TestClient
 
 from main import app
 
@@ -19,7 +19,7 @@ HIGH_CONFIDENCE_COMPLETE_DATA = {
     "appointment_type": "Specialist",
     "summary": "Patient presented with skin lesions. Diagnosis: benign nevus. Recommended follow-up in 6 months.",
     "doctor": "Dr. Smith",
-    "confidence_score": 85
+    "confidence_score": 85,
 }
 
 HIGH_CONFIDENCE_MISSING_TYPE_DATA = {
@@ -28,7 +28,7 @@ HIGH_CONFIDENCE_MISSING_TYPE_DATA = {
     "appointment_type": "",  # Missing type
     "summary": "Patient evaluated for chest pain. ECG normal. Recommended lifestyle modifications.",
     "doctor": "Dr. Johnson",
-    "confidence_score": 78
+    "confidence_score": 78,
 }
 
 LOW_CONFIDENCE_DATA = {
@@ -37,7 +37,7 @@ LOW_CONFIDENCE_DATA = {
     "appointment_type": "General Checkup",
     "summary": "Routine examination completed.",
     "doctor": "Unknown",
-    "confidence_score": 35  # Below threshold
+    "confidence_score": 35,  # Below threshold
 }
 
 MISSING_FIELDS_DATA = {
@@ -46,13 +46,13 @@ MISSING_FIELDS_DATA = {
     "appointment_type": "Lab Work",
     "summary": "",  # Missing summary
     "doctor": "",  # Missing doctor
-    "confidence_score": 75
+    "confidence_score": 75,
 }
 
-class TestPDFParser:
 
-    @patch('main.client.chat.completions.create')
-    @patch('main.PyPDF2.PdfReader')
+class TestPDFParser:
+    @patch("main.client.chat.completions.create")
+    @patch("main.PyPDF2.PdfReader")
     def test_high_confidence_complete_data(self, mock_pdf_reader, mock_chatgpt):
         """Test parsing with high confidence and complete data"""
         # Mock the PDF reader
@@ -79,8 +79,8 @@ class TestPDFParser:
         assert data["confidence_score"] == 85
         assert "file_size" in data
 
-    @patch('main.client.chat.completions.create')
-    @patch('main.PyPDF2.PdfReader')
+    @patch("main.client.chat.completions.create")
+    @patch("main.PyPDF2.PdfReader")
     def test_high_confidence_missing_appointment_type(self, mock_pdf_reader, mock_chatgpt):
         """Test parsing with high confidence but missing appointment type - should set to 'Other'"""
         # Mock the PDF reader
@@ -104,8 +104,8 @@ class TestPDFParser:
         assert data["appointment_type"] == "Other"  # Should be set to 'Other'
         assert data["confidence_score"] == 78
 
-    @patch('main.client.chat.completions.create')
-    @patch('main.PyPDF2.PdfReader')
+    @patch("main.client.chat.completions.create")
+    @patch("main.PyPDF2.PdfReader")
     def test_low_confidence_data(self, mock_pdf_reader, mock_chatgpt):
         """Test parsing with low confidence score - should return 400 error"""
         # Mock the PDF reader
@@ -126,8 +126,8 @@ class TestPDFParser:
         assert response.status_code == 400
         assert "Low confidence score" in response.json()["detail"]
 
-    @patch('main.client.chat.completions.create')
-    @patch('main.PyPDF2.PdfReader')
+    @patch("main.client.chat.completions.create")
+    @patch("main.PyPDF2.PdfReader")
     def test_missing_required_fields(self, mock_pdf_reader, mock_chatgpt):
         """Test parsing with missing required fields - should return 400 error"""
         # Mock the PDF reader
@@ -148,8 +148,8 @@ class TestPDFParser:
         assert response.status_code == 400
         assert "Missing required fields" in response.json()["detail"]
 
-    @patch('main.client.chat.completions.create')
-    @patch('main.PyPDF2.PdfReader')
+    @patch("main.client.chat.completions.create")
+    @patch("main.PyPDF2.PdfReader")
     def test_invalid_json_response(self, mock_pdf_reader, mock_chatgpt):
         """Test parsing when ChatGPT returns invalid JSON - should return 400 error"""
         # Mock the PDF reader
@@ -178,6 +178,7 @@ class TestPDFParser:
 
         assert response.status_code == 400
         assert "File must be a PDF" in response.json()["detail"]
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

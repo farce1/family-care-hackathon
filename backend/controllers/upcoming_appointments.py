@@ -1,17 +1,29 @@
-import httpx
-from typing import Optional, List, Dict, Any, Union
-from pydantic import BaseModel, Field, validator
-from fastapi import HTTPException, APIRouter
-from fastapi.responses import JSONResponse
-import logging
-from datetime import datetime
 import json
+import logging
 import uuid
+from datetime import datetime
+from typing import Any, ClassVar
+
+import httpx
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from sqlalchemy import (
+    TIMESTAMP,
+    UUID,
+    Boolean,
+    Column,
+    Date,
+    Float,
+    Integer,
+    String,
+    Text,
+    create_engine,
+)
+from sqlalchemy.orm import sessionmaker
 
 # Import your existing models and classes
 from models import Base
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine, Column, String, Integer, Date, Text, Boolean, TIMESTAMP, UUID, Float
 
 # Use your existing database setup
 DATABASE_URL = "postgresql://familycare:familycare@postgres:5432/familycare"
@@ -41,72 +53,71 @@ class UpcomingAppointment(Base):
     created_at = Column(TIMESTAMP(timezone=True), default=datetime.utcnow)
     updated_at = Column(TIMESTAMP(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
 
+
 # Python equivalent of TypeScript interfaces
 class NFZQueueParams(BaseModel):
     """Python equivalent of NFZQueueParams interface"""
-    page: Optional[int] = 1
-    limit: Optional[int] = 10
-    format: Optional[str] = 'json'  # 'json' | 'xml'
-    case: Optional[int] = 1
-    province: Optional[str] = '01'
-    benefit: Optional[str] = None
-    benefitForChildren: Optional[bool] = None
-    apiVersion: Optional[str] = None
+
+    page: int | None = 1
+    limit: int | None = 10
+    format: str | None = "json"  # 'json' | 'xml'
+    case: int | None = 1
+    province: str | None = "01"
+    benefit: str | None = None
+    benefitForChildren: bool | None = None
+    apiVersion: str | None = None
 
 
 class NFZDateInfo(BaseModel):
     """Python equivalent of dates object in NFZ API"""
-    applicable: Optional[bool] = None
-    date: Optional[str] = None
-    date_situation_as_at: Optional[str] = None
+
+    applicable: bool | None = None
+    date: str | None = None
+    date_situation_as_at: str | None = None
 
     class Config:
         allow_population_by_field_name = True
-        fields = {
-            'date_situation_as_at': 'date-situation-as-at'
-        }
+        fields: ClassVar = {"date_situation_as_at": "date-situation-as-at"}
 
 
 class NFZProviderData(BaseModel):
     """Python equivalent of provider-data statistics"""
-    awaiting: Optional[int] = 0
-    removed: Optional[int] = 0
-    average_period: Optional[int] = 0
-    update: Optional[str] = None
+
+    awaiting: int | None = 0
+    removed: int | None = 0
+    average_period: int | None = 0
+    update: str | None = None
 
     class Config:
         allow_population_by_field_name = True
-        fields = {
-            'average_period': 'average-period'
-        }
+        fields: ClassVar = {"average_period": "average-period"}
 
 
 class NFZStatistics(BaseModel):
     """Python equivalent of statistics object"""
-    provider_data: Optional[NFZProviderData] = None
-    computed_data: Optional[Any] = None
+
+    provider_data: NFZProviderData | None = None
+    computed_data: Any | None = None
 
     class Config:
         allow_population_by_field_name = True
-        fields = {
-            'provider_data': 'provider-data',
-            'computed_data': 'computed-data'
-        }
+        fields: ClassVar = {"provider_data": "provider-data", "computed_data": "computed-data"}
 
 
 class NFZAttributes(BaseModel):
     """Python equivalent of attributes object in NFZ API response"""
-    case: Optional[int] = None
-    benefit: Optional[str] = ""
-    provider: Optional[str] = ""
-    place: Optional[str] = ""
-    address: Optional[str] = ""
-    locality: Optional[str] = ""
-    phone: Optional[str] = ""
-    latitude: Optional[Union[float, str]] = None  # Can be float, string, or None
-    longitude: Optional[Union[float, str]] = None  # Can be float, string, or None
-    dates: Optional[NFZDateInfo] = None
-    statistics: Optional[NFZStatistics] = None
+
+    case: int | None = None
+    benefit: str | None = ""
+    provider: str | None = ""
+    place: str | None = ""
+    address: str | None = ""
+    locality: str | None = ""
+    phone: str | None = ""
+    latitude: float | str | None = None  # Can be float, string, or None
+    longitude: float | str | None = None  # Can be float, string, or None
+    dates: NFZDateInfo | None = None
+    statistics: NFZStatistics | None = None
 
     class Config:
         extra = "allow"  # Equivalent to [key: string]: unknown
@@ -114,25 +125,28 @@ class NFZAttributes(BaseModel):
 
 class NFZQueueItem(BaseModel):
     """Python equivalent of NFZQueueItem interface"""
-    type: Optional[str] = ""
-    id: Optional[str] = ""
-    attributes: Optional[NFZAttributes] = None
+
+    type: str | None = ""
+    id: str | None = ""
+    attributes: NFZAttributes | None = None
 
 
 class NFZLinks(BaseModel):
     """Python equivalent of links object in API response"""
-    first: Optional[str] = ""
-    prev: Optional[str] = None
-    self: Optional[str] = ""
-    next: Optional[str] = ""
-    last: Optional[str] = ""
+
+    first: str | None = ""
+    prev: str | None = None
+    self: str | None = ""
+    next: str | None = ""
+    last: str | None = ""
 
 
 class NFZMeta(BaseModel):
     """Python equivalent of meta object in API response"""
-    count: Optional[int] = 0
-    page: Optional[int] = 1
-    limit: Optional[int] = 10
+
+    count: int | None = 0
+    page: int | None = 1
+    limit: int | None = 10
 
     class Config:
         extra = "allow"  # Equivalent to [key: string]: unknown
@@ -140,13 +154,15 @@ class NFZMeta(BaseModel):
 
 class NFZApiResponse(BaseModel):
     """Python equivalent of NFZApiResponse interface"""
-    meta: Optional[NFZMeta] = None
-    links: Optional[NFZLinks] = None
-    data: Optional[List[NFZQueueItem]] = []
+
+    meta: NFZMeta | None = None
+    links: NFZLinks | None = None
+    data: list[NFZQueueItem] | None = []
 
 
 class ParsedNFZItem(BaseModel):
     """Python equivalent of ParsedNFZItem interface"""
+
     id: str
     place: str
     provider: str
@@ -156,8 +172,8 @@ class ParsedNFZItem(BaseModel):
     date: str
     benefit: str
     averageWaitDays: int
-    latitude: Optional[Union[float, str]] = None  # Allow both float and string
-    longitude: Optional[Union[float, str]] = None  # Allow both float and string
+    latitude: float | str | None = None  # Allow both float and string
+    longitude: float | str | None = None  # Allow both float and string
 
 
 class NFZService:
@@ -177,7 +193,7 @@ class NFZService:
         return "0"
 
     @staticmethod
-    async def get_nfz_queues(params: NFZQueueParams = None) -> List[ParsedNFZItem]:
+    async def get_nfz_queues(params: NFZQueueParams = None) -> list[ParsedNFZItem]:
         """
         Python equivalent of getNFZQueues function.
         Fetches NFZ queue data and returns parsed items.
@@ -189,12 +205,12 @@ class NFZService:
         default_params = NFZQueueParams(
             page=1,
             limit=10,  # Increased to get more results
-            format='json',
+            format="json",
             case=1,
-            province='01',
-            benefit='PORADNIA ALERGOLOGICZNA',
+            province="01",
+            benefit="PORADNIA ALERGOLOGICZNA",
             benefitForChildren=False,
-            apiVersion='1.3'
+            apiVersion="1.3",
         )
 
         # Merge parameters - equivalent to { ...defaultParams, ...params }
@@ -213,76 +229,73 @@ class NFZService:
         # Build query parameters
         query_params = {}
 
-        if final_params.get('page'):
-            query_params['page'] = str(final_params['page'])
-        if final_params.get('limit'):
-            query_params['limit'] = str(final_params['limit'])
-        if final_params.get('format'):
-            query_params['format'] = final_params['format']
-        if final_params.get('case'):
-            query_params['case'] = str(final_params['case'])
-        if final_params.get('province'):
-            query_params['province'] = final_params['province']
-        if final_params.get('benefit'):
-            query_params['benefit'] = final_params['benefit']
-        if final_params.get('benefitForChildren') is not None:
-            query_params['benefitForChildren'] = str(final_params['benefitForChildren']).lower()
-        if final_params.get('apiVersion'):
-            query_params['api-version'] = final_params['apiVersion']
+        if final_params.get("page"):
+            query_params["page"] = str(final_params["page"])
+        if final_params.get("limit"):
+            query_params["limit"] = str(final_params["limit"])
+        if final_params.get("format"):
+            query_params["format"] = final_params["format"]
+        if final_params.get("case"):
+            query_params["case"] = str(final_params["case"])
+        if final_params.get("province"):
+            query_params["province"] = final_params["province"]
+        if final_params.get("benefit"):
+            query_params["benefit"] = final_params["benefit"]
+        if final_params.get("benefitForChildren") is not None:
+            query_params["benefitForChildren"] = str(final_params["benefitForChildren"]).lower()
+        if final_params.get("apiVersion"):
+            query_params["api-version"] = final_params["apiVersion"]
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             try:
                 response = await client.get(
                     NFZService.BASE_URL,
                     params=query_params,
-                    headers={
-                        'accept': 'text/plain',
-                        'Content-Type': 'application/json'
-                    }
+                    headers={"accept": "text/plain", "Content-Type": "application/json"},
                 )
 
                 if response.status_code != 200:
                     raise HTTPException(
                         status_code=response.status_code,
-                        detail=f"HTTP error! status: {response.status_code}"
+                        detail=f"HTTP error! status: {response.status_code}",
                     )
 
                 # Parse JSON response
                 api_data_dict = response.json()
 
                 # Safety check - equivalent to TypeScript safety check
-                if not api_data_dict.get('data') or not isinstance(api_data_dict['data'], list):
-                    logger.warning('No data found in API response')
+                if not api_data_dict.get("data") or not isinstance(api_data_dict["data"], list):
+                    logger.warning("No data found in API response")
                     return []
 
-                parsed_list: List[ParsedNFZItem] = []
+                parsed_list: list[ParsedNFZItem] = []
 
                 # Updated loop to match actual API structure - equivalent to TypeScript for loop
-                for i in range(len(api_data_dict['data'])):
-                    item = api_data_dict['data'][i]
-                    attrs = item.get('attributes', {})  # The actual data is in 'attributes'
+                for i in range(len(api_data_dict["data"])):
+                    item = api_data_dict["data"][i]
+                    attrs = item.get("attributes", {})  # The actual data is in 'attributes'
 
                     # Extract statistics safely
-                    statistics = attrs.get('statistics', {})
-                    provider_data = statistics.get('provider-data', {})
-                    dates = attrs.get('dates', {})
+                    statistics = attrs.get("statistics", {})
+                    provider_data = statistics.get("provider-data", {})
+                    dates = attrs.get("dates", {})
 
                     # Convert coordinates safely
-                    latitude_val = NFZService.safe_convert_coordinate(attrs.get('latitude'))
-                    longitude_val = NFZService.safe_convert_coordinate(attrs.get('longitude'))
+                    latitude_val = NFZService.safe_convert_coordinate(attrs.get("latitude"))
+                    longitude_val = NFZService.safe_convert_coordinate(attrs.get("longitude"))
 
                     parsed_item = ParsedNFZItem(
-                        id=item.get('id', ''),
-                        place=attrs.get('place', 'Unknown place'),
-                        provider=attrs.get('provider', 'Unknown provider'),
-                        phone=attrs.get('phone', 'No phone'),
-                        address=attrs.get('address', 'No address'),
-                        locality=attrs.get('locality', 'Unknown city'),
-                        date=dates.get('date', 'No date available'),
-                        benefit=attrs.get('benefit', 'Unknown benefit'),
-                        averageWaitDays=provider_data.get('average-period', 0),
+                        id=item.get("id", ""),
+                        place=attrs.get("place", "Unknown place"),
+                        provider=attrs.get("provider", "Unknown provider"),
+                        phone=attrs.get("phone", "No phone"),
+                        address=attrs.get("address", "No address"),
+                        locality=attrs.get("locality", "Unknown city"),
+                        date=dates.get("date", "No date available"),
+                        benefit=attrs.get("benefit", "Unknown benefit"),
+                        averageWaitDays=provider_data.get("average-period", 0),
                         latitude=latitude_val,
-                        longitude=longitude_val
+                        longitude=longitude_val,
                     )
 
                     parsed_list.append(parsed_item)
@@ -290,17 +303,13 @@ class NFZService:
                 return parsed_list
 
             except httpx.RequestError as error:
-                logger.error(f'Error fetching NFZ queue data: {error}')
+                logger.error(f"Error fetching NFZ queue data: {error}")
                 raise HTTPException(
-                    status_code=503,
-                    detail=f'Error fetching NFZ queue data: {str(error)}'
+                    status_code=503, detail=f"Error fetching NFZ queue data: {error!s}"
                 )
             except Exception as error:
-                logger.error(f'Unexpected error: {error}')
-                raise HTTPException(
-                    status_code=500,
-                    detail=f'Unexpected error: {str(error)}'
-                )
+                logger.error(f"Unexpected error: {error}")
+                raise HTTPException(status_code=500, detail=f"Unexpected error: {error!s}")
 
     @staticmethod
     async def main_test():
@@ -308,29 +317,29 @@ class NFZService:
         Python equivalent of the main() function from TypeScript.
         Tests the NFZ API with correct structure.
         """
-        print('🏥 Testing NFZ API with correct structure...\n')
+        print("🏥 Testing NFZ API with correct structure...\n")
 
         try:
             params = NFZQueueParams(benefit="PORADNIA ALERGOLOGICZNA")
             results = await NFZService.get_nfz_queues(params)
 
-            print('✅ API call successful!')
-            print('📊 Results:')
-            print(f'Number of clinics found: {len(results)}')
+            print("✅ API call successful!")
+            print("📊 Results:")
+            print(f"Number of clinics found: {len(results)}")
 
             for index, clinic in enumerate(results):
-                print(f'\n--- Clinic {index + 1} ---')
-                print(f'ID: {clinic.id}')
-                print(f'Provider: {clinic.provider}')
-                print(f'Place: {clinic.place}')
-                print(f'City: {clinic.locality}')
-                print(f'Address: {clinic.address}')
-                print(f'Phone: {clinic.phone}')
-                print(f'Next available: {clinic.date}')
-                print(f'Average wait (days): {clinic.averageWaitDays}')
-                print(f'Location: {clinic.latitude}, {clinic.longitude}')
+                print(f"\n--- Clinic {index + 1} ---")
+                print(f"ID: {clinic.id}")
+                print(f"Provider: {clinic.provider}")
+                print(f"Place: {clinic.place}")
+                print(f"City: {clinic.locality}")
+                print(f"Address: {clinic.address}")
+                print(f"Phone: {clinic.phone}")
+                print(f"Next available: {clinic.date}")
+                print(f"Average wait (days): {clinic.averageWaitDays}")
+                print(f"Location: {clinic.latitude}, {clinic.longitude}")
 
-            print('\n🔍 Raw parsed data:')
+            print("\n🔍 Raw parsed data:")
             # Convert to dict for JSON serialization
             results_dict = [result.dict() for result in results]
             print(json.dumps(results_dict, indent=2, ensure_ascii=False))
@@ -338,7 +347,7 @@ class NFZService:
             return results
 
         except Exception as error:
-            print(f'❌ Test failed: {error}')
+            print(f"❌ Test failed: {error}")
             raise
 
     @staticmethod
@@ -354,13 +363,13 @@ class NFZService:
             longitude_float = None
 
             try:
-                if appointment_data.latitude and str(appointment_data.latitude) not in ['0', '']:
+                if appointment_data.latitude and str(appointment_data.latitude) not in ["0", ""]:
                     latitude_float = float(appointment_data.latitude)
             except (ValueError, TypeError):
                 latitude_float = None
 
             try:
-                if appointment_data.longitude and str(appointment_data.longitude) not in ['0', '']:
+                if appointment_data.longitude and str(appointment_data.longitude) not in ["0", ""]:
                     longitude_float = float(appointment_data.longitude)
             except (ValueError, TypeError):
                 longitude_float = None
@@ -368,23 +377,27 @@ class NFZService:
             # Parse the date string to date object
             appointment_date = None
             try:
-                appointment_date = datetime.strptime(appointment_data.date, '%Y-%m-%d').date()
+                appointment_date = datetime.strptime(appointment_data.date, "%Y-%m-%d").date()
             except ValueError:
                 try:
-                    appointment_date = datetime.strptime(appointment_data.date, '%d-%m-%Y').date()
+                    appointment_date = datetime.strptime(appointment_data.date, "%d-%m-%Y").date()
                 except ValueError:
                     return False, f"Invalid date format: {appointment_data.date}"
 
             # Check if appointment already exists
-            existing_appointment = db.query(UpcomingAppointment).filter(
-                UpcomingAppointment.nfz_id == appointment_data.id
-            ).first()
+            existing_appointment = (
+                db.query(UpcomingAppointment)
+                .filter(UpcomingAppointment.nfz_id == appointment_data.id)
+                .first()
+            )
 
             if existing_appointment:
                 # Update existing record
                 existing_appointment.place = appointment_data.place
                 existing_appointment.provider = appointment_data.provider
-                existing_appointment.phone = appointment_data.phone if appointment_data.phone != "No phone" else None
+                existing_appointment.phone = (
+                    appointment_data.phone if appointment_data.phone != "No phone" else None
+                )
                 existing_appointment.address = appointment_data.address
                 existing_appointment.locality = appointment_data.locality
                 existing_appointment.date = appointment_date
@@ -412,14 +425,14 @@ class NFZService:
                     average_wait_days=appointment_data.averageWaitDays,
                     latitude=latitude_float,
                     longitude=longitude_float,
-                    is_active=True
+                    is_active=True,
                 )
 
                 db.add(new_appointment)
                 return True, ""  # New record, no error
 
         except Exception as e:
-            return False, f"Error processing appointment {appointment_data.id}: {str(e)}"
+            return False, f"Error processing appointment {appointment_data.id}: {e!s}"
 
 
 # Add these new endpoints to your existing router
@@ -428,14 +441,14 @@ router = APIRouter()
 
 @router.post("/add_appointment")
 async def fetch_and_upload_nfz(
-        page: Optional[int] = 1,
-        limit: Optional[int] = 10,
-        format: Optional[str] = "json",
-        case: Optional[int] = 1,
-        province: Optional[str] = "01",
-        benefit: Optional[str] = "PORADNIA ALERGOLOGICZNA",
-        benefitForChildren: Optional[bool] = False,
-        apiVersion: Optional[str] = "1.3"
+    page: int | None = 1,
+    limit: int | None = 10,
+    format: str | None = "json",
+    case: int | None = 1,
+    province: str | None = "01",
+    benefit: str | None = "PORADNIA ALERGOLOGICZNA",
+    benefitForChildren: bool | None = False,
+    apiVersion: str | None = "1.3",
 ):
     """
     Fetches NFZ data using the working GET logic and uploads to database.
@@ -451,21 +464,23 @@ async def fetch_and_upload_nfz(
             province=province,
             benefit=benefit,
             benefitForChildren=benefitForChildren,
-            apiVersion=apiVersion
+            apiVersion=apiVersion,
         )
 
         # Use the working fetch logic
         appointments = await NFZService.get_nfz_queues(params)
 
         if not appointments:
-            return JSONResponse(content={
-                "success": True,
-                "message": "No appointments found from NFZ API",
-                "total_processed": 0,
-                "new_records": 0,
-                "updated_records": 0,
-                "errors": []
-            })
+            return JSONResponse(
+                content={
+                    "success": True,
+                    "message": "No appointments found from NFZ API",
+                    "total_processed": 0,
+                    "new_records": 0,
+                    "updated_records": 0,
+                    "errors": [],
+                }
+            )
 
         # Now upload to database
         db = SessionLocal()
@@ -487,24 +502,26 @@ async def fetch_and_upload_nfz(
             # Commit all changes
             db.commit()
 
-            return JSONResponse(content={
-                "success": len(errors) == 0,
-                "total_processed": len(appointments),
-                "new_records": new_records,
-                "updated_records": updated_records,
-                "errors": errors,
-                "fetched_data_sample": [appointment.dict() for appointment in appointments[:3]]
-                # Include first 3 for verification
-            })
+            return JSONResponse(
+                content={
+                    "success": len(errors) == 0,
+                    "total_processed": len(appointments),
+                    "new_records": new_records,
+                    "updated_records": updated_records,
+                    "errors": errors,
+                    "fetched_data_sample": [appointment.dict() for appointment in appointments[:3]],
+                    # Include first 3 for verification
+                }
+            )
 
         except Exception as e:
             db.rollback()
-            raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Database error: {e!s}")
         finally:
             db.close()
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error: {e!s}")
 
 
 @router.post("/save_appointment")
@@ -525,25 +542,23 @@ async def save_single_appointment(appointment: ParsedNFZItem):
 
         if error_msg:
             db.rollback()
-            return JSONResponse(
-                status_code=400,
-                content={
-                    "success": False,
-                    "message": error_msg
-                }
-            )
+            return JSONResponse(status_code=400, content={"success": False, "message": error_msg})
 
         db.commit()
 
         # Fetch the saved appointment
-        saved_appointment = db.query(UpcomingAppointment).filter(
-            UpcomingAppointment.nfz_id == appointment.id
-        ).first()
+        saved_appointment = (
+            db.query(UpcomingAppointment)
+            .filter(UpcomingAppointment.nfz_id == appointment.id)
+            .first()
+        )
 
         if saved_appointment:
             return {
                 "success": True,
-                "message": "Appointment saved successfully" if is_new else "Appointment already exists and was updated",
+                "message": "Appointment saved successfully"
+                if is_new
+                else "Appointment already exists and was updated",
                 "is_new": is_new,
                 "appointment": {
                     "id": str(saved_appointment.id),
@@ -555,32 +570,29 @@ async def save_single_appointment(appointment: ParsedNFZItem):
                     "locality": saved_appointment.locality,
                     "date": saved_appointment.date.isoformat(),
                     "benefit": saved_appointment.benefit,
-                    "average_wait_days": saved_appointment.average_wait_days
-                }
+                    "average_wait_days": saved_appointment.average_wait_days,
+                },
             }
         else:
-            return {
-                "success": False,
-                "message": "Failed to retrieve saved appointment"
-            }
+            return {"success": False, "message": "Failed to retrieve saved appointment"}
 
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Database error: {e!s}")
     finally:
         db.close()
 
 
 @router.get("/fetch_nfz_appointments")
 async def fetch_nfz_appointments(
-        page: Optional[int] = 1,
-        limit: Optional[int] = 10,
-        format: Optional[str] = "json",
-        case: Optional[int] = 1,
-        province: Optional[str] = "01",
-        benefit: Optional[str] = "PORADNIA ALERGOLOGICZNA",
-        benefitForChildren: Optional[bool] = False,
-        apiVersion: Optional[str] = "1.3"
+    page: int | None = 1,
+    limit: int | None = 10,
+    format: str | None = "json",
+    case: int | None = 1,
+    province: str | None = "01",
+    benefit: str | None = "PORADNIA ALERGOLOGICZNA",
+    benefitForChildren: bool | None = False,
+    apiVersion: str | None = "1.3",
 ):
     """
     Fetches appointments directly from NFZ API without saving to database.
@@ -606,59 +618,59 @@ async def fetch_nfz_appointments(
             province=province,
             benefit=benefit,
             benefitForChildren=benefitForChildren,
-            apiVersion=apiVersion
+            apiVersion=apiVersion,
         )
 
         # Fetch from NFZ API
         appointments = await NFZService.get_nfz_queues(params)
 
         if not appointments:
-            return JSONResponse(content={
-                "success": True,
-                "message": "No appointments found from NFZ API",
-                "total": 0,
-                "appointments": []
-            })
+            return JSONResponse(
+                content={
+                    "success": True,
+                    "message": "No appointments found from NFZ API",
+                    "total": 0,
+                    "appointments": [],
+                }
+            )
 
         # Format response - convert ParsedNFZItem to dict
         response_data = []
         for appointment in appointments:
-            response_data.append({
-                "id": appointment.id,
-                "place": appointment.place,
-                "provider": appointment.provider,
-                "phone": appointment.phone,
-                "address": appointment.address,
-                "locality": appointment.locality,
-                "date": appointment.date,
-                "benefit": appointment.benefit,
-                "averageWaitDays": appointment.averageWaitDays,
-                "latitude": appointment.latitude,
-                "longitude": appointment.longitude
-            })
+            response_data.append(
+                {
+                    "id": appointment.id,
+                    "place": appointment.place,
+                    "provider": appointment.provider,
+                    "phone": appointment.phone,
+                    "address": appointment.address,
+                    "locality": appointment.locality,
+                    "date": appointment.date,
+                    "benefit": appointment.benefit,
+                    "averageWaitDays": appointment.averageWaitDays,
+                    "latitude": appointment.latitude,
+                    "longitude": appointment.longitude,
+                }
+            )
 
-        return {
-            "success": True,
-            "total": len(response_data),
-            "appointments": response_data
-        }
+        return {"success": True, "total": len(response_data), "appointments": response_data}
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching NFZ appointments: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching NFZ appointments: {e!s}")
 
 
 @router.get("/upcoming_appointments")
 async def get_appointments(
-        locality: Optional[str] = None,
-        benefit: Optional[str] = None,
-        province: Optional[str] = None,
-        max_wait_days: Optional[int] = None,
-        min_wait_days: Optional[int] = None,
-        active_only: bool = True,
-        limit: Optional[int] = 100,
-        offset: Optional[int] = 0,
-        sort_by: Optional[str] = "date",  # "date", "wait_days", "created_at"
-        sort_order: Optional[str] = "asc"  # "asc" or "desc"
+    locality: str | None = None,
+    benefit: str | None = None,
+    province: str | None = None,
+    max_wait_days: int | None = None,
+    min_wait_days: int | None = None,
+    active_only: bool = True,
+    limit: int | None = 100,
+    offset: int | None = 0,
+    sort_by: str | None = "date",  # "date", "wait_days", "created_at"
+    sort_order: str | None = "asc",  # "asc" or "desc"
 ):
     """
     Get stored appointments with comprehensive filtering and sorting options.
@@ -681,7 +693,7 @@ async def get_appointments(
 
         # Apply filters
         if active_only:
-            query = query.filter(UpcomingAppointment.is_active == True)
+            query = query.filter(UpcomingAppointment.is_active)
 
         if locality:
             query = query.filter(UpcomingAppointment.locality.ilike(f"%{locality}%"))
@@ -721,24 +733,26 @@ async def get_appointments(
         # Format response
         response_data = []
         for appointment in appointments:
-            response_data.append({
-                "id": str(appointment.id),
-                "nfz_id": appointment.nfz_id,
-                "place": appointment.place,
-                "provider": appointment.provider,
-                "phone": appointment.phone,
-                "address": appointment.address,
-                "locality": appointment.locality,
-                "date": appointment.date.isoformat(),
-                "benefit": appointment.benefit,
-                "waiting_people": appointment.waiting_people,
-                "average_wait_days": appointment.average_wait_days,
-                "latitude": appointment.latitude,
-                "longitude": appointment.longitude,
-                "is_active": appointment.is_active,
-                "created_at": appointment.created_at.isoformat(),
-                "updated_at": appointment.updated_at.isoformat()
-            })
+            response_data.append(
+                {
+                    "id": str(appointment.id),
+                    "nfz_id": appointment.nfz_id,
+                    "place": appointment.place,
+                    "provider": appointment.provider,
+                    "phone": appointment.phone,
+                    "address": appointment.address,
+                    "locality": appointment.locality,
+                    "date": appointment.date.isoformat(),
+                    "benefit": appointment.benefit,
+                    "waiting_people": appointment.waiting_people,
+                    "average_wait_days": appointment.average_wait_days,
+                    "latitude": appointment.latitude,
+                    "longitude": appointment.longitude,
+                    "is_active": appointment.is_active,
+                    "created_at": appointment.created_at.isoformat(),
+                    "updated_at": appointment.updated_at.isoformat(),
+                }
+            )
 
         return {
             "success": True,
@@ -746,10 +760,10 @@ async def get_appointments(
             "returned_count": len(response_data),
             "offset": offset,
             "limit": limit,
-            "appointments": response_data
+            "appointments": response_data,
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Database error: {e!s}")
     finally:
         db.close()

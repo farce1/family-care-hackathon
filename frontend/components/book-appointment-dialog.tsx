@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { z } from "zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useState } from "react";
+import { z } from "zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -10,20 +10,30 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { AlertCircle, Plus, Loader2, MapPin, Calendar, Phone, Building2, Clock, Check } from "lucide-react"
-import { getApiBaseUrl, API_ENDPOINTS } from "@/lib/api/config"
-import { UpcomingAppointment } from "@/lib/api/appointments"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  AlertCircle,
+  Plus,
+  Loader2,
+  MapPin,
+  Calendar,
+  Phone,
+  Building2,
+  Clock,
+  Check,
+} from "lucide-react";
+import { getApiBaseUrl, API_ENDPOINTS } from "@/lib/api/config";
+import { UpcomingAppointment } from "@/lib/api/appointments";
+import { cn } from "@/lib/utils";
 
 // Medical specialties list from README.md (lines 2-152)
 const medicalSpecialties = [
@@ -178,33 +188,33 @@ const medicalSpecialties = [
   "ŚWIADCZENIA Z ZAKRESU ORTOPEDII I TRAUMATOLOGII NARZĄDU RUCHU",
   "ŚWIADCZENIA Z ZAKRESU OTOLARYNGOLOGII",
   "ŚWIADCZENIA Z ZAKRESU UROLOGII",
-]
+];
 
 const specialtySchema = z.object({
   specialty: z.string().min(1, "Please select a medical specialty"),
-})
+});
 
-type SpecialtyFormData = z.infer<typeof specialtySchema>
-type ValidationErrors = Partial<Record<keyof SpecialtyFormData, string>>
+type SpecialtyFormData = z.infer<typeof specialtySchema>;
+type ValidationErrors = Partial<Record<keyof SpecialtyFormData, string>>;
 
 export function BookAppointmentDialog() {
-  const queryClient = useQueryClient()
-  const [open, setOpen] = useState(false)
-  const [specialty, setSpecialty] = useState<string>("")
-  const [errors, setErrors] = useState<ValidationErrors>({})
-  const [appointments, setAppointments] = useState<UpcomingAppointment[]>([])
-  const [savedAppointmentIds, setSavedAppointmentIds] = useState<Set<string>>(new Set())
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [specialty, setSpecialty] = useState<string>("");
+  const [errors, setErrors] = useState<ValidationErrors>({});
+  const [appointments, setAppointments] = useState<UpcomingAppointment[]>([]);
+  const [savedAppointmentIds, setSavedAppointmentIds] = useState<Set<string>>(new Set());
 
   // Mutation for saving a single appointment
   const saveAppointmentMutation = useMutation({
     mutationFn: async (appointment: UpcomingAppointment) => {
-      const baseUrl = getApiBaseUrl()
-      const url = `${baseUrl}/save_appointment`
+      const baseUrl = getApiBaseUrl();
+      const url = `${baseUrl}/save_appointment`;
 
       const response = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           id: appointment.id,
@@ -219,53 +229,53 @@ export function BookAppointmentDialog() {
           latitude: appointment.latitude,
           longitude: appointment.longitude,
         }),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error(`Failed to save appointment: ${response.status} ${response.statusText}`)
+        throw new Error(`Failed to save appointment: ${response.status} ${response.statusText}`);
       }
 
-      return await response.json()
+      return await response.json();
     },
     onSuccess: (data, appointment) => {
-      setSavedAppointmentIds(prev => new Set(prev).add(appointment.id))
+      setSavedAppointmentIds((prev) => new Set(prev).add(appointment.id));
       // Invalidate and refetch upcoming appointments query to refresh the appointments table
-      queryClient.invalidateQueries({ queryKey: ['upcoming-appointments'] })
+      queryClient.invalidateQueries({ queryKey: ["upcoming-appointments"] });
     },
-  })
+  });
 
   // Mutation for fetching appointments from NFZ API
   const fetchAppointmentsMutation = useMutation({
     mutationFn: async (benefit: string) => {
-      const baseUrl = getApiBaseUrl()
-      const url = `${baseUrl}${API_ENDPOINTS.FETCH_NFZ_APPOINTMENTS}?benefit=${encodeURIComponent(benefit)}`
+      const baseUrl = getApiBaseUrl();
+      const url = `${baseUrl}${API_ENDPOINTS.FETCH_NFZ_APPOINTMENTS}?benefit=${encodeURIComponent(benefit)}`;
 
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-      })
+      });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch appointments: ${response.status} ${response.statusText}`)
+        throw new Error(`Failed to fetch appointments: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json()
+      const data = await response.json();
 
       // Convert NFZ API response to UpcomingAppointment format
       interface NFZAppointmentResponse {
-        id: string
-        place: string
-        provider: string
-        phone: string | null
-        address: string
-        locality: string
-        date: string
-        benefit: string
-        averageWaitDays: number
-        latitude: number | string | null
-        longitude: number | string | null
+        id: string;
+        place: string;
+        provider: string;
+        phone: string | null;
+        address: string;
+        locality: string;
+        date: string;
+        benefit: string;
+        averageWaitDays: number;
+        latitude: number | string | null;
+        longitude: number | string | null;
       }
 
       const appointments = (data.appointments || []).map((apt: NFZAppointmentResponse) => ({
@@ -280,54 +290,54 @@ export function BookAppointmentDialog() {
         average_wait_days: apt.averageWaitDays,
         latitude: apt.latitude,
         longitude: apt.longitude,
-      }))
+      }));
 
-      return appointments
+      return appointments;
     },
     onSuccess: (data) => {
-      setAppointments(data)
+      setAppointments(data);
     },
     onError: (error) => {
-      console.error('Error fetching appointments:', error)
+      console.error("Error fetching appointments:", error);
     },
-  })
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setErrors({})
+    e.preventDefault();
+    setErrors({});
 
     // Validate form
     const result = specialtySchema.safeParse({
       specialty,
-    })
+    });
 
     if (!result.success) {
-      const fieldErrors: ValidationErrors = {}
+      const fieldErrors: ValidationErrors = {};
       result.error.errors.forEach((error) => {
         if (error.path[0]) {
-          fieldErrors[error.path[0] as keyof SpecialtyFormData] = error.message
+          fieldErrors[error.path[0] as keyof SpecialtyFormData] = error.message;
         }
-      })
-      setErrors(fieldErrors)
-      return
+      });
+      setErrors(fieldErrors);
+      return;
     }
 
     // Fetch appointments
-    fetchAppointmentsMutation.mutate(specialty)
-  }
+    fetchAppointmentsMutation.mutate(specialty);
+  };
 
   const handleOpenChange = (isOpen: boolean) => {
-    setOpen(isOpen)
+    setOpen(isOpen);
     if (!isOpen) {
       // Reset form when closing
-      setSpecialty("")
-      setErrors({})
-      setAppointments([])
-      setSavedAppointmentIds(new Set())
-      fetchAppointmentsMutation.reset()
-      saveAppointmentMutation.reset()
+      setSpecialty("");
+      setErrors({});
+      setAppointments([]);
+      setSavedAppointmentIds(new Set());
+      fetchAppointmentsMutation.reset();
+      saveAppointmentMutation.reset();
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -350,15 +360,18 @@ export function BookAppointmentDialog() {
         <form onSubmit={handleSubmit} className="space-y-8 mt-6">
           {/* Medical Specialty Selector */}
           <div className="space-y-3 max-w-2xl mx-auto">
-            <Label htmlFor="specialty" className="text-base font-semibold text-gray-700 block text-center">
+            <Label
+              htmlFor="specialty"
+              className="text-base font-semibold text-gray-700 block text-center"
+            >
               Medical Specialty
             </Label>
             <Select
               value={specialty}
               onValueChange={(value) => {
-                setSpecialty(value)
+                setSpecialty(value);
                 if (errors.specialty) {
-                  setErrors((prev) => ({ ...prev, specialty: undefined }))
+                  setErrors((prev) => ({ ...prev, specialty: undefined }));
                 }
               }}
             >
@@ -369,7 +382,10 @@ export function BookAppointmentDialog() {
                   errors.specialty && "border-red-400 focus:border-red-400 focus:ring-red-100"
                 )}
               >
-                <SelectValue placeholder="Choose a medical specialty..." className="text-gray-500" />
+                <SelectValue
+                  placeholder="Choose a medical specialty..."
+                  className="text-gray-500"
+                />
               </SelectTrigger>
               <SelectContent className="max-h-[400px] rounded-xl border-2 border-gray-200 shadow-lg">
                 {medicalSpecialties.map((spec) => (
@@ -429,7 +445,8 @@ export function BookAppointmentDialog() {
               <div>
                 <p className="font-semibold text-lg">Failed to load appointments</p>
                 <p className="text-sm text-red-600 mt-1">
-                  {fetchAppointmentsMutation.error?.message || "An error occurred while fetching appointments"}
+                  {fetchAppointmentsMutation.error?.message ||
+                    "An error occurred while fetching appointments"}
                 </p>
               </div>
             </div>
@@ -457,8 +474,10 @@ export function BookAppointmentDialog() {
             </div>
             <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-200 scrollbar-track-gray-100">
               {appointments.map((appointment) => {
-                const isSaved = savedAppointmentIds.has(appointment.id)
-                const isSaving = saveAppointmentMutation.isPending && saveAppointmentMutation.variables?.id === appointment.id
+                const isSaved = savedAppointmentIds.has(appointment.id);
+                const isSaving =
+                  saveAppointmentMutation.isPending &&
+                  saveAppointmentMutation.variables?.id === appointment.id;
 
                 return (
                   <div
@@ -469,7 +488,9 @@ export function BookAppointmentDialog() {
                       <div className="flex-1 space-y-3">
                         {/* Provider and Place */}
                         <div>
-                          <h4 className="font-bold text-lg text-gray-900">{appointment.provider}</h4>
+                          <h4 className="font-bold text-lg text-gray-900">
+                            {appointment.provider}
+                          </h4>
                           <p className="text-sm text-gray-600 font-medium">{appointment.place}</p>
                         </div>
 
@@ -500,16 +521,18 @@ export function BookAppointmentDialog() {
                         <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-100 to-amber-100 text-orange-800 rounded-xl shadow-sm">
                           <Calendar className="w-5 h-5" />
                           <span className="font-bold text-base">
-                            {new Date(appointment.date).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
+                            {new Date(appointment.date).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
                             })}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg">
                           <Clock className="w-4 h-4" />
-                          <span className="font-semibold">{appointment.average_wait_days} days</span>
+                          <span className="font-semibold">
+                            {appointment.average_wait_days} days
+                          </span>
                         </div>
 
                         {/* Book Appointment Button */}
@@ -540,7 +563,7 @@ export function BookAppointmentDialog() {
                       </div>
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           </div>
@@ -554,11 +577,12 @@ export function BookAppointmentDialog() {
             </div>
             <p className="text-gray-700 font-bold text-lg">No appointments available</p>
             <p className="text-sm text-gray-600 mt-2 max-w-md mx-auto">
-              There are currently no available appointments for this specialty. Try selecting a different specialty or check back later.
+              There are currently no available appointments for this specialty. Try selecting a
+              different specialty or check back later.
             </p>
           </div>
         )}
       </DialogContent>
     </Dialog>
-  )
+  );
 }

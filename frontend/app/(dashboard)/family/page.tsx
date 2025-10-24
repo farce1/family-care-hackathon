@@ -1,20 +1,20 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { FileText, Calendar, Building2, ArrowRight } from "lucide-react"
-import { TextAnimate } from "@/components/ui/text-animate"
-import Link from "next/link"
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { FileText, Calendar, Building2, ArrowRight } from "lucide-react";
+import { TextAnimate } from "@/components/ui/text-animate";
+import Link from "next/link";
 
 interface FamilyMember {
-  id: string
-  name: string
-  role: string
-  avatar: string
-  initials: string
-  documentsCount: number
-  appointmentDate?: string
-  facilityVisit?: string
-  accentColor: string
+  id: string;
+  name: string;
+  role: string;
+  avatar: string;
+  initials: string;
+  documentsCount: number;
+  appointmentDate?: string;
+  facilityVisit?: string;
+  accentColor: string;
 }
 
 const familyMembers: FamilyMember[] = [
@@ -60,7 +60,7 @@ const familyMembers: FamilyMember[] = [
     facilityVisit: "Weterynaria VetClinic Wrocław",
     accentColor: "amber",
   },
-]
+];
 
 export default function FamilyPage() {
   return (
@@ -88,195 +88,169 @@ export default function FamilyPage() {
                   animationDelay: `${index * 100}ms`,
                 }}
               >
-              {/* Decorative accent line */}
-              <div
-                className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
-                  member.accentColor === "orange"
-                    ? "from-primary to-primary/80"
-                    : "from-secondary to-secondary/80"
-                }`}
-              />
+                {/* Decorative accent line */}
+                <div
+                  className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
+                    member.accentColor === "orange"
+                      ? "from-primary to-primary/80"
+                      : "from-secondary to-secondary/80"
+                  }`}
+                />
 
-              <CardHeader className="text-center pb-4 pt-6">
-                {/* Large Avatar */}
-                <div className="flex justify-center mb-4">
-                  <Avatar className="w-24 h-24 ring-4 ring-primary/10 group-hover:ring-primary/20 transition-all">
-                    <AvatarImage src={member.avatar} alt={member.name} />
-                    <AvatarFallback
-                      className={`text-2xl font-bold ${
-                        member.accentColor === "orange"
-                          ? "bg-primary/10 text-primary"
-                          : "bg-secondary/10 text-secondary"
-                      }`}
-                    >
-                      {member.initials}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-
-                {/* Name and Role */}
-                <div>
-                  <h3 className="text-xl font-bold text-foreground mb-1">
-                    {member.name}
-                  </h3>
-                  <Badge
-                    variant="secondary"
-                    className={`${
-                      member.accentColor === "orange"
-                        ? "bg-primary/10 text-primary border-primary/20"
-                        : "bg-secondary/10 text-secondary border-secondary/20"
-                    }`}
-                  >
-                    {member.role}
-                  </Badge>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-4 flex-1 flex flex-col">
-                <div className="space-y-4 flex-1">
-                  {/* Documents Count */}
-                  <div
-                    className={`flex items-center gap-3 p-3 rounded-lg ${
-                      member.accentColor === "orange"
-                        ? "bg-primary/5"
-                        : "bg-secondary/5"
-                    }`}
-                  >
-                    <div
-                      className={`p-2 rounded-md ${
-                        member.accentColor === "orange"
-                          ? "bg-primary/10"
-                          : "bg-secondary/10"
-                      }`}
-                    >
-                      <FileText
-                        className={`w-4 h-4 ${
+                <CardHeader className="text-center pb-4 pt-6">
+                  {/* Large Avatar */}
+                  <div className="flex justify-center mb-4">
+                    <Avatar className="w-24 h-24 ring-4 ring-primary/10 group-hover:ring-primary/20 transition-all">
+                      <AvatarImage src={member.avatar} alt={member.name} />
+                      <AvatarFallback
+                        className={`text-2xl font-bold ${
                           member.accentColor === "orange"
-                            ? "text-primary"
-                            : "text-secondary"
-                        }`}
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs text-muted-foreground">Documents</p>
-                      <p
-                        className={`font-semibold ${
-                          member.accentColor === "orange"
-                            ? "text-primary"
-                            : "text-secondary"
+                            ? "bg-primary/10 text-primary"
+                            : "bg-secondary/10 text-secondary"
                         }`}
                       >
-                        {member.documentsCount} uploaded
-                      </p>
+                        {member.initials}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+
+                  {/* Name and Role */}
+                  <div>
+                    <h3 className="text-xl font-bold text-foreground mb-1">{member.name}</h3>
+                    <Badge
+                      variant="secondary"
+                      className={`${
+                        member.accentColor === "orange"
+                          ? "bg-primary/10 text-primary border-primary/20"
+                          : "bg-secondary/10 text-secondary border-secondary/20"
+                      }`}
+                    >
+                      {member.role}
+                    </Badge>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-4 flex-1 flex flex-col">
+                  <div className="space-y-4 flex-1">
+                    {/* Documents Count */}
+                    <div
+                      className={`flex items-center gap-3 p-3 rounded-lg ${
+                        member.accentColor === "orange" ? "bg-primary/5" : "bg-secondary/5"
+                      }`}
+                    >
+                      <div
+                        className={`p-2 rounded-md ${
+                          member.accentColor === "orange" ? "bg-primary/10" : "bg-secondary/10"
+                        }`}
+                      >
+                        <FileText
+                          className={`w-4 h-4 ${
+                            member.accentColor === "orange" ? "text-primary" : "text-secondary"
+                          }`}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-muted-foreground">Documents</p>
+                        <p
+                          className={`font-semibold ${
+                            member.accentColor === "orange" ? "text-primary" : "text-secondary"
+                          }`}
+                        >
+                          {member.documentsCount} uploaded
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Appointment Date */}
+                    <div
+                      className={`flex items-center gap-3 p-3 rounded-lg min-h-[68px] ${
+                        member.accentColor === "orange" ? "bg-primary/5" : "bg-secondary/5"
+                      }`}
+                    >
+                      {member.appointmentDate ? (
+                        <>
+                          <div
+                            className={`p-2 rounded-md ${
+                              member.accentColor === "orange" ? "bg-primary/10" : "bg-secondary/10"
+                            }`}
+                          >
+                            <Calendar
+                              className={`w-4 h-4 ${
+                                member.accentColor === "orange" ? "text-primary" : "text-secondary"
+                              }`}
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-xs text-muted-foreground">Next Appointment</p>
+                            <p
+                              className={`font-semibold ${
+                                member.accentColor === "orange" ? "text-primary" : "text-secondary"
+                              }`}
+                            >
+                              {member.appointmentDate}
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex-1" />
+                      )}
+                    </div>
+
+                    {/* Facility Visit */}
+                    <div
+                      className={`flex items-center gap-3 p-3 rounded-lg min-h-[68px] ${
+                        member.accentColor === "orange" ? "bg-primary/5" : "bg-secondary/5"
+                      }`}
+                    >
+                      {member.facilityVisit ? (
+                        <>
+                          <div
+                            className={`p-2 rounded-md ${
+                              member.accentColor === "orange" ? "bg-primary/10" : "bg-secondary/10"
+                            }`}
+                          >
+                            <Building2
+                              className={`w-4 h-4 ${
+                                member.accentColor === "orange" ? "text-primary" : "text-secondary"
+                              }`}
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-xs text-muted-foreground">Facility Visit</p>
+                            <p
+                              className={`font-semibold text-sm ${
+                                member.accentColor === "orange" ? "text-primary" : "text-secondary"
+                              }`}
+                            >
+                              {member.facilityVisit}
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex-1" />
+                      )}
                     </div>
                   </div>
 
-                  {/* Appointment Date */}
-                  <div
-                    className={`flex items-center gap-3 p-3 rounded-lg min-h-[68px] ${
-                      member.accentColor === "orange"
-                        ? "bg-primary/5"
-                        : "bg-secondary/5"
-                    }`}
-                  >
-                    {member.appointmentDate ? (
-                      <>
-                        <div
-                          className={`p-2 rounded-md ${
-                            member.accentColor === "orange"
-                              ? "bg-primary/10"
-                              : "bg-secondary/10"
-                          }`}
-                        >
-                          <Calendar
-                            className={`w-4 h-4 ${
-                              member.accentColor === "orange"
-                                ? "text-primary"
-                                : "text-secondary"
-                            }`}
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-xs text-muted-foreground">Next Appointment</p>
-                          <p
-                            className={`font-semibold ${
-                              member.accentColor === "orange"
-                                ? "text-primary"
-                                : "text-secondary"
-                            }`}
-                          >
-                            {member.appointmentDate}
-                          </p>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="flex-1" />
-                    )}
+                  {/* View Details Button */}
+                  <div className="mt-auto pt-4 border-t border-border">
+                    <div
+                      className={`flex items-center justify-center gap-2 text-sm font-medium transition-colors ${
+                        member.accentColor === "orange"
+                          ? "text-primary group-hover:text-primary/80"
+                          : "text-secondary group-hover:text-secondary/80"
+                      }`}
+                    >
+                      View Details
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
                   </div>
-
-                  {/* Facility Visit */}
-                  <div
-                    className={`flex items-center gap-3 p-3 rounded-lg min-h-[68px] ${
-                      member.accentColor === "orange"
-                        ? "bg-primary/5"
-                        : "bg-secondary/5"
-                    }`}
-                  >
-                    {member.facilityVisit ? (
-                      <>
-                        <div
-                          className={`p-2 rounded-md ${
-                            member.accentColor === "orange"
-                              ? "bg-primary/10"
-                              : "bg-secondary/10"
-                          }`}
-                        >
-                          <Building2
-                            className={`w-4 h-4 ${
-                              member.accentColor === "orange"
-                                ? "text-primary"
-                                : "text-secondary"
-                            }`}
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-xs text-muted-foreground">Facility Visit</p>
-                          <p
-                            className={`font-semibold text-sm ${
-                              member.accentColor === "orange"
-                                ? "text-primary"
-                                : "text-secondary"
-                            }`}
-                          >
-                            {member.facilityVisit}
-                          </p>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="flex-1" />
-                    )}
-                  </div>
-                </div>
-
-                {/* View Details Button */}
-                <div className="mt-auto pt-4 border-t border-border">
-                  <div
-                    className={`flex items-center justify-center gap-2 text-sm font-medium transition-colors ${
-                      member.accentColor === "orange"
-                        ? "text-primary group-hover:text-primary/80"
-                        : "text-secondary group-hover:text-secondary/80"
-                    }`}
-                  >
-                    View Details
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
             </Link>
           ))}
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -3,7 +3,7 @@
 interface NFZQueueParams {
   page?: number;
   limit?: number;
-  format?: 'json' | 'xml';
+  format?: "json" | "xml";
   case?: number;
   province?: string;
   benefit?: string;
@@ -76,40 +76,40 @@ interface ParsedNFZItem {
 }
 
 async function getNFZQueues(params: NFZQueueParams = {}): Promise<ParsedNFZItem[]> {
-  const baseUrl = 'https://api.nfz.gov.pl/app-itl-api/queues';
+  const baseUrl = "https://api.nfz.gov.pl/app-itl-api/queues";
 
   const defaultParams: NFZQueueParams = {
     page: 1,
     limit: 10, // Increased to get more results
-    format: 'json',
+    format: "json",
     case: 1,
-    province: '01',
-    benefit: 'PORADNIA ALERGOLOGICZNA',
+    province: "01",
+    benefit: "PORADNIA ALERGOLOGICZNA",
     benefitForChildren: false,
-    apiVersion: '1.3'
+    apiVersion: "1.3",
   };
 
   const finalParams = { ...defaultParams, ...params };
   const url = new URL(baseUrl);
 
-  if (finalParams.page) url.searchParams.append('page', finalParams.page.toString());
-  if (finalParams.limit) url.searchParams.append('limit', finalParams.limit.toString());
-  if (finalParams.format) url.searchParams.append('format', finalParams.format);
-  if (finalParams.case) url.searchParams.append('case', finalParams.case.toString());
-  if (finalParams.province) url.searchParams.append('province', finalParams.province);
-  if (finalParams.benefit) url.searchParams.append('benefit', finalParams.benefit);
+  if (finalParams.page) url.searchParams.append("page", finalParams.page.toString());
+  if (finalParams.limit) url.searchParams.append("limit", finalParams.limit.toString());
+  if (finalParams.format) url.searchParams.append("format", finalParams.format);
+  if (finalParams.case) url.searchParams.append("case", finalParams.case.toString());
+  if (finalParams.province) url.searchParams.append("province", finalParams.province);
+  if (finalParams.benefit) url.searchParams.append("benefit", finalParams.benefit);
   if (finalParams.benefitForChildren !== undefined) {
-    url.searchParams.append('benefitForChildren', finalParams.benefitForChildren.toString());
+    url.searchParams.append("benefitForChildren", finalParams.benefitForChildren.toString());
   }
-  if (finalParams.apiVersion) url.searchParams.append('api-version', finalParams.apiVersion);
+  if (finalParams.apiVersion) url.searchParams.append("api-version", finalParams.apiVersion);
 
   try {
     const response = await fetch(url.toString(), {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'accept': 'text/plain',
-        'Content-Type': 'application/json'
-      }
+        accept: "text/plain",
+        "Content-Type": "application/json",
+      },
     });
 
     if (!response.ok) {
@@ -120,7 +120,7 @@ async function getNFZQueues(params: NFZQueueParams = {}): Promise<ParsedNFZItem[
 
     // Safety check
     if (!apiData.data || !Array.isArray(apiData.data)) {
-      console.warn('No data found in API response');
+      console.warn("No data found in API response");
       return [];
     }
 
@@ -133,58 +133,56 @@ async function getNFZQueues(params: NFZQueueParams = {}): Promise<ParsedNFZItem[
 
       const parsedItem: ParsedNFZItem = {
         id: item.id,
-        place: attrs.place || 'Unknown place',
-        provider: attrs.provider || 'Unknown provider',
-        phone: attrs.phone || 'No phone',
-        address: attrs.address || 'No address',
-        locality: attrs.locality || 'Unknown city',
-        date: attrs.dates?.date || 'No date available',
-        benefit: attrs.benefit || 'Unknown benefit',
+        place: attrs.place || "Unknown place",
+        provider: attrs.provider || "Unknown provider",
+        phone: attrs.phone || "No phone",
+        address: attrs.address || "No address",
+        locality: attrs.locality || "Unknown city",
+        date: attrs.dates?.date || "No date available",
+        benefit: attrs.benefit || "Unknown benefit",
         averageWaitDays: attrs.statistics?.["provider-data"]?.["average-period"] || 0,
         latitude: attrs.latitude || 0,
-        longitude: attrs.longitude || 0
+        longitude: attrs.longitude || 0,
       };
 
       parsedList.push(parsedItem);
     }
 
     return parsedList;
-
   } catch (error) {
-    console.error('Error fetching NFZ queue data:', error);
+    console.error("Error fetching NFZ queue data:", error);
     throw error;
   }
 }
 
 // Updated main function to show the new data structure
 async function main() {
-  console.log('🏥 Testing NFZ API with correct structure...\n');
+  console.log("🏥 Testing NFZ API with correct structure...\n");
 
   try {
-    const results = await getNFZQueues({benefit: "PORADNIA ALERGOLOGICZNA"});
+    const results = await getNFZQueues({ benefit: "PORADNIA ALERGOLOGICZNA" });
 
-    console.log('✅ API call successful!');
-    console.log('📊 Results:');
-    console.log('Number of clinics found:', results.length);
+    console.log("✅ API call successful!");
+    console.log("📊 Results:");
+    console.log("Number of clinics found:", results.length);
 
     results.forEach((clinic, index) => {
       console.log(`\n--- Clinic ${index + 1} ---`);
-      console.log('ID:', clinic.id);
-      console.log('Provider:', clinic.provider);
-      console.log('Place:', clinic.place);
-      console.log('City:', clinic.locality);
-      console.log('Address:', clinic.address);
-      console.log('Phone:', clinic.phone);
-      console.log('Next available:', clinic.date);
-      console.log('Average wait (days):', clinic.averageWaitDays);
-      console.log('Location:', `${clinic.latitude}, ${clinic.longitude}`);
+      console.log("ID:", clinic.id);
+      console.log("Provider:", clinic.provider);
+      console.log("Place:", clinic.place);
+      console.log("City:", clinic.locality);
+      console.log("Address:", clinic.address);
+      console.log("Phone:", clinic.phone);
+      console.log("Next available:", clinic.date);
+      console.log("Average wait (days):", clinic.averageWaitDays);
+      console.log("Location:", `${clinic.latitude}, ${clinic.longitude}`);
     });
 
-    console.log('\n🔍 Raw parsed data:');
+    console.log("\n🔍 Raw parsed data:");
     console.log(JSON.stringify(results, null, 2));
-
   } catch (error) {
-    console.error('❌ Test failed:', error);
+    console.error("❌ Test failed:", error);
   }
 }
 

@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { Heart, LayoutDashboard, Users, Calendar } from "lucide-react"
+import { Heart, LayoutDashboard, Users, Calendar } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -12,9 +12,9 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
-} from "@/components/ui/sidebar"
-import Link from "next/link"
-import { ProfilePopup } from "@/components/profile-popup"
+} from "@/components/ui/sidebar";
+import Link from "next/link";
+import { ProfilePopup } from "@/components/profile-popup";
 
 const items = [
   {
@@ -32,7 +32,7 @@ const items = [
     url: "/appointments",
     icon: Calendar,
   },
-]
+];
 
 export function AppSidebar() {
   return (
@@ -71,5 +71,5 @@ export function AppSidebar() {
         <ProfilePopup />
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }

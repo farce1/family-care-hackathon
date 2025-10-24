@@ -1,22 +1,24 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
-import os
-from dotenv import load_dotenv
-import PyPDF2
-from openai import OpenAI
 import io
-from typing import Optional, List
-import sqlalchemy
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from datetime import datetime
 import logging
+import os
+from datetime import datetime
+
+import PyPDF2
+from dotenv import load_dotenv
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.responses import JSONResponse
+from openai import OpenAI
+from pydantic import BaseModel
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+
+from models import ParsedAppointment
+from utils import get_default_mcp_user
+
 try:
     import pytesseract
-    from PIL import Image
     from pdf2image import convert_from_bytes
+
     OCR_AVAILABLE = True
 except ImportError:
     OCR_AVAILABLE = False
@@ -31,16 +33,12 @@ if not OPENAI_API_KEY:
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 # Database setup - use environment variable with fallback
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://familycare:familycare@postgres:5432/familycare")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", "postgresql://familycare:familycare@postgres:5432/familycare"
+)
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Import models and auth dependencies
-from models import ParsedAppointment, User
-
-# Import auth dependencies and utilities
-from controllers.auth import get_current_user
-from utils import get_default_mcp_user
 
 # Dependency to get database session
 def get_db():
@@ -49,6 +47,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
 
 class AppointmentData(BaseModel):
     name: str = "Medical Report"
@@ -59,25 +58,28 @@ class AppointmentData(BaseModel):
     doctor: str = ""
     confidence_score: int = 0
 
+
 class ParsedAppointmentResponse(BaseModel):
     id: str
     original_filename: str
     name: str
     date: str
     appointment_type: str
-    summary: Optional[str]
-    doctor: Optional[str]
+    summary: str | None
+    doctor: str | None
     file_size: int
     processing_status: str
     confidence_score: int
     created_at: str
     updated_at: str
 
+
 # Create router
 router = APIRouter()
 
 # Maximum file size: 15MB
 MAX_FILE_SIZE = 15 * 1024 * 1024
+
 
 @router.post("/parse-pdf")
 async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db)):
@@ -97,7 +99,7 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
         doctor: Name of doctor or facility name if doctor not available
         id: Database ID of the stored record
     """
-    if not file.filename.lower().endswith('.pdf'):
+    if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="File must be a PDF")
 
     try:
@@ -108,13 +110,11 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
         if len(pdf_content) > MAX_FILE_SIZE:
             raise HTTPException(
                 status_code=413,
-                detail=f"File too large. Maximum size is {MAX_FILE_SIZE / (1024 * 1024):.0f}MB"
+                detail=f"File too large. Maximum size is {MAX_FILE_SIZE / (1024 * 1024):.0f}MB",
             )
 
         if len(pdf_content) == 0:
             raise HTTPException(status_code=400, detail="File is empty")
-
-        pdf_file = io.BytesIO(pdf_content)
 
         # Function to extract text with rotation attempts and OCR fallback
         def extract_text_with_rotation(pdf_bytes):
@@ -151,12 +151,16 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
                     # Check if we got meaningful text (more than just whitespace)
                     stripped_content = text_content.strip()
                     if stripped_content and len(stripped_content) > 10:
-                        logging.info(f"Successfully extracted text with rotation {rotation}, length: {len(stripped_content)}")
+                        logging.info(
+                            f"Successfully extracted text with rotation {rotation}, length: {len(stripped_content)}"
+                        )
                         return text_content
 
                     # Try OCR if available and regular extraction failed
                     if OCR_AVAILABLE:
-                        logging.info(f"Regular extraction failed for rotation {rotation}, attempting OCR")
+                        logging.info(
+                            f"Regular extraction failed for rotation {rotation}, attempting OCR"
+                        )
                         try:
                             # Reset file pointer for OCR
                             pdf_bytes.seek(0)
@@ -170,28 +174,40 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
                             for i, image in enumerate(images):
                                 # Apply rotation to image if needed
                                 if rotation > 0:
-                                    image = image.rotate(-rotation, expand=True)  # PIL uses counterclockwise rotation
-                                    logging.info(f"Applied inverse rotation {rotation} to image {i}")
+                                    image = image.rotate(
+                                        -rotation, expand=True
+                                    )  # PIL uses counterclockwise rotation
+                                    logging.info(
+                                        f"Applied inverse rotation {rotation} to image {i}"
+                                    )
 
                                 # Perform OCR on the image
-                                page_text = pytesseract.image_to_string(image, lang='pol+eng')  # Support Polish and English
+                                page_text = pytesseract.image_to_string(
+                                    image, lang="pol+eng"
+                                )  # Support Polish and English
                                 ocr_text += page_text + "\n"
 
                             # Check if OCR extracted meaningful text
                             stripped_ocr = ocr_text.strip()
-                            if stripped_ocr and len(stripped_ocr) > 20:  # OCR might extract some garbage, so higher threshold
-                                logging.info(f"OCR successful for rotation {rotation}, extracted text length: {len(stripped_ocr)}")
+                            if (
+                                stripped_ocr and len(stripped_ocr) > 20
+                            ):  # OCR might extract some garbage, so higher threshold
+                                logging.info(
+                                    f"OCR successful for rotation {rotation}, extracted text length: {len(stripped_ocr)}"
+                                )
                                 return ocr_text
                             else:
-                                logging.warning(f"OCR for rotation {rotation} extracted insufficient text (length: {len(stripped_ocr)})")
+                                logging.warning(
+                                    f"OCR for rotation {rotation} extracted insufficient text (length: {len(stripped_ocr)})"
+                                )
 
                         except Exception as ocr_error:
-                            logging.warning(f"OCR failed for rotation {rotation}: {str(ocr_error)}")
+                            logging.warning(f"OCR failed for rotation {rotation}: {ocr_error!s}")
                             # OCR failed, continue to next rotation
                             continue
 
                 except Exception as e:
-                    logging.warning(f"Rotation {rotation} failed: {str(e)}")
+                    logging.warning(f"Rotation {rotation} failed: {e!s}")
                     # If this rotation fails, continue to next rotation
                     continue
 
@@ -205,7 +221,10 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
 
         if not text_content.strip():
             logging.error(f"Failed to extract any text from PDF: {file.filename}")
-            raise HTTPException(status_code=400, detail="Could not extract text from PDF even after trying different rotations")
+            raise HTTPException(
+                status_code=400,
+                detail="Could not extract text from PDF even after trying different rotations",
+            )
 
         logging.info(f"Successfully extracted text from PDF, length: {len(text_content.strip())}")
 
@@ -239,16 +258,21 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are a medical document parser. Always return valid JSON."},
-                    {"role": "user", "content": prompt}
+                    {
+                        "role": "system",
+                        "content": "You are a medical document parser. Always return valid JSON.",
+                    },
+                    {"role": "user", "content": prompt},
                 ],
                 temperature=0.1,  # Low temperature for consistent parsing
-                max_tokens=4096
+                max_tokens=4096,
             )
             logging.info("ChatGPT API call successful")
         except Exception as e:
-            logging.error(f"ChatGPT API call failed: {str(e)}")
-            raise HTTPException(status_code=500, detail="Failed to process document with AI service")
+            logging.error(f"ChatGPT API call failed: {e!s}")
+            raise HTTPException(
+                status_code=500, detail="Failed to process document with AI service"
+            )
 
         # Parse the response
         result_text = response.choices[0].message.content.strip()
@@ -256,6 +280,7 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
 
         # Try to extract JSON from the response
         import json
+
         logging.info("Parsing JSON response from ChatGPT")
         try:
             # Remove any markdown formatting if present
@@ -269,90 +294,111 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
             logging.info("Successfully parsed JSON response")
 
             # Add file size to the response
-            parsed_data['file_size'] = len(pdf_content)
+            parsed_data["file_size"] = len(pdf_content)
             logging.info(f"Added file size: {len(pdf_content)} bytes")
 
             # Get confidence score
-            confidence_score = parsed_data.get('confidence_score', 0)
+            confidence_score = parsed_data.get("confidence_score", 0)
             logging.info(f"Extracted confidence score: {confidence_score}")
 
             # Check if confidence score is below 51 - return error
             if confidence_score < 51:
-                logging.warning(f"Low confidence score: {confidence_score}, rejecting appointment data")
+                logging.warning(
+                    f"Low confidence score: {confidence_score}, rejecting appointment data"
+                )
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Low confidence score ({confidence_score}). Unable to reliably extract appointment information."
+                    detail=f"Low confidence score ({confidence_score}). Unable to reliably extract appointment information.",
                 )
 
             # Check if any required fields are missing/empty
-            required_fields = ['name', 'date', 'summary', 'doctor']
-            missing_fields = [field for field in required_fields if not parsed_data.get(field, '').strip()]
+            required_fields = ["name", "date", "summary", "doctor"]
+            missing_fields = [
+                field for field in required_fields if not parsed_data.get(field, "").strip()
+            ]
 
             if missing_fields:
-                logging.warning(f"Missing required fields: {missing_fields}, confidence: {confidence_score}")
+                logging.warning(
+                    f"Missing required fields: {missing_fields}, confidence: {confidence_score}"
+                )
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Missing required fields: {', '.join(missing_fields)}. Confidence score: {confidence_score}"
+                    detail=f"Missing required fields: {', '.join(missing_fields)}. Confidence score: {confidence_score}",
                 )
 
             logging.info("All required fields present and confidence score acceptable")
 
             # Handle appointment_type logic
             valid_types = [
-                'General Checkup', 'Dental', 'Vision', 'Specialist', 'Vaccination',
-                'Follow-up', 'Emergency', 'Lab Work', 'Physical Therapy', 'Mental Health', 'Veterinary', 'Other'
+                "General Checkup",
+                "Dental",
+                "Vision",
+                "Specialist",
+                "Vaccination",
+                "Follow-up",
+                "Emergency",
+                "Lab Work",
+                "Physical Therapy",
+                "Mental Health",
+                "Veterinary",
+                "Other",
             ]
 
-            appointment_type = parsed_data.get('appointment_type', '').strip()
+            appointment_type = parsed_data.get("appointment_type", "").strip()
             logging.info(f"Original appointment type: '{appointment_type}'")
 
             # If appointment_type is missing or invalid, and confidence is high enough, set to "Other"
-            if not appointment_type or appointment_type not in valid_types[:-1]:  # Exclude "Other" from invalid check
+            if (
+                not appointment_type or appointment_type not in valid_types[:-1]
+            ):  # Exclude "Other" from invalid check
                 if confidence_score > 51:
-                    parsed_data['appointment_type'] = 'Other'
+                    parsed_data["appointment_type"] = "Other"
                     logging.info("Set appointment type to 'Other' due to high confidence score")
                 else:
-                    logging.warning(f"Cannot determine appointment type and confidence ({confidence_score}) too low to use 'Other'")
+                    logging.warning(
+                        f"Cannot determine appointment type and confidence ({confidence_score}) too low to use 'Other'"
+                    )
                     raise HTTPException(
                         status_code=409,
-                        detail=f"Cannot determine appointment type and confidence score ({confidence_score}) is not high enough to use 'Other'"
+                        detail=f"Cannot determine appointment type and confidence score ({confidence_score}) is not high enough to use 'Other'",
                     )
             elif appointment_type not in valid_types:
                 # This shouldn't happen with the above logic, but just in case
                 logging.warning(f"Invalid appointment type after validation: {appointment_type}")
                 raise HTTPException(
-                    status_code=409,
-                    detail=f"Invalid appointment type: {appointment_type}"
+                    status_code=409, detail=f"Invalid appointment type: {appointment_type}"
                 )
 
             logging.info(f"Final appointment type: {parsed_data['appointment_type']}")
 
             # Validate date format with proper parsing
-            date_str = parsed_data.get('date', '').strip()
+            date_str = parsed_data.get("date", "").strip()
             logging.info(f"Original date: '{date_str}'")
             if not date_str:
-                parsed_data['date'] = datetime.now().strftime('%Y-%m-%d')
+                parsed_data["date"] = datetime.now().strftime("%Y-%m-%d")
                 logging.warning(f"Empty date, using current date: {parsed_data['date']}")
             else:
                 try:
                     # Try to parse the date to validate it's a real date
-                    datetime.strptime(date_str, '%Y-%m-%d')
+                    datetime.strptime(date_str, "%Y-%m-%d")
                     logging.info(f"Valid date format: {date_str}")
                 except ValueError:
                     # If parsing fails, use current date
-                    parsed_data['date'] = datetime.now().strftime('%Y-%m-%d')
-                    logging.warning(f"Invalid date '{date_str}', using current date: {parsed_data['date']}")
+                    parsed_data["date"] = datetime.now().strftime("%Y-%m-%d")
+                    logging.warning(
+                        f"Invalid date '{date_str}', using current date: {parsed_data['date']}"
+                    )
 
             appointment_data = AppointmentData(**parsed_data)
             logging.info("Successfully created AppointmentData object")
 
         except (json.JSONDecodeError, ValueError) as e:
             # Fallback if JSON parsing fails - this represents low confidence
-            logging.error(f"Failed to parse JSON response: {str(e)}")
+            logging.error(f"Failed to parse JSON response: {e!s}")
             logging.error(f"Raw response that failed parsing: {result_text[:1000]}")
             raise HTTPException(
                 status_code=400,
-                detail="Failed to parse JSON response from AI service. Unable to extract appointment information."
+                detail="Failed to parse JSON response from AI service. Unable to extract appointment information.",
             )
 
         # Always save to database
@@ -368,14 +414,14 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
                 user_id=default_user.id,
                 original_filename=file.filename,
                 name=appointment_data.name,
-                date=datetime.strptime(appointment_data.date, '%Y-%m-%d').date(),
+                date=datetime.strptime(appointment_data.date, "%Y-%m-%d").date(),
                 appointment_type=appointment_data.appointment_type,
                 summary=appointment_data.summary,
                 doctor=appointment_data.doctor,
                 file_size=appointment_data.file_size,
                 raw_file_data=pdf_content,  # Store the original PDF
                 processing_status="completed",
-                confidence_score=appointment_data.confidence_score
+                confidence_score=appointment_data.confidence_score,
             )
 
             # Save to database using the injected session
@@ -389,24 +435,25 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
 
             # Add the database ID to the response
             response_data = appointment_data.model_dump()
-            response_data['id'] = str(db_appointment.id)
+            response_data["id"] = str(db_appointment.id)
             logging.info("Appointment processing completed successfully")
             return JSONResponse(content=response_data)
 
         except Exception as e:
             db.rollback()
-            logging.error(f"Database operation failed: {str(e)}")
-            raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+            logging.error(f"Database operation failed: {e!s}")
+            raise HTTPException(status_code=500, detail=f"Database error: {e!s}")
 
     except HTTPException:
         # Re-raise HTTPExceptions as they already have the correct status code
         logging.warning("HTTPException raised during appointment processing")
         raise
     except Exception as e:
-        logging.error(f"Unexpected error during PDF processing: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error processing PDF: {str(e)}")
+        logging.error(f"Unexpected error during PDF processing: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Error processing PDF: {e!s}")
 
-@router.get("/parsed-appointments", response_model=List[ParsedAppointmentResponse])
+
+@router.get("/parsed-appointments", response_model=list[ParsedAppointmentResponse])
 async def get_parsed_appointments(db: Session = Depends(get_db)):
     """
     Get all parsed appointments (no auth required).
@@ -421,21 +468,23 @@ async def get_parsed_appointments(db: Session = Depends(get_db)):
         # Convert to response format
         response_data = []
         for appointment in appointments:
-            response_data.append(ParsedAppointmentResponse(
-                id=str(appointment.id),
-                original_filename=appointment.original_filename,
-                name=appointment.name,
-                date=appointment.date.isoformat(),
-                appointment_type=appointment.appointment_type,
-                summary=appointment.summary,
-                doctor=appointment.doctor,
-                file_size=appointment.file_size,
-                processing_status=appointment.processing_status,
-                confidence_score=appointment.confidence_score,
-                created_at=appointment.created_at.isoformat(),
-                updated_at=appointment.updated_at.isoformat()
-            ))
+            response_data.append(
+                ParsedAppointmentResponse(
+                    id=str(appointment.id),
+                    original_filename=appointment.original_filename,
+                    name=appointment.name,
+                    date=appointment.date.isoformat(),
+                    appointment_type=appointment.appointment_type,
+                    summary=appointment.summary,
+                    doctor=appointment.doctor,
+                    file_size=appointment.file_size,
+                    processing_status=appointment.processing_status,
+                    confidence_score=appointment.confidence_score,
+                    created_at=appointment.created_at.isoformat(),
+                    updated_at=appointment.updated_at.isoformat(),
+                )
+            )
 
         return response_data
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Database error: {e!s}")

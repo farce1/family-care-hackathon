@@ -15,12 +15,7 @@ export type AppointmentType =
   | "Mental Health"
   | "Veterinary";
 
-export type AppointmentStatus =
-  | "upcoming"
-  | "completed"
-  | "cancelled"
-  | "rescheduled"
-  | "no-show";
+export type AppointmentStatus = "upcoming" | "completed" | "cancelled" | "rescheduled" | "no-show";
 
 export interface Appointment {
   id: string;

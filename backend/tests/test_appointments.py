@@ -1,17 +1,17 @@
-import pytest
+from datetime import date, datetime
 from unittest.mock import Mock, patch
-from fastapi.testclient import TestClient
-from datetime import datetime, date
-import uuid
 
-from main import app
+import pytest
+from fastapi.testclient import TestClient
+
 from controllers.appointments import ParsedAppointment
+from main import app
 
 client = TestClient(app)
 
-class TestParsedAppointments:
 
-    @patch('controllers.appointments.SessionLocal')
+class TestParsedAppointments:
+    @patch("controllers.appointments.SessionLocal")
     def test_get_parsed_appointments_with_data(self, mock_session_local):
         """Test getting parsed appointments when data exists"""
         # Mock database session
@@ -81,7 +81,7 @@ class TestParsedAppointments:
         # Verify database session was closed
         mock_session.close.assert_called_once()
 
-    @patch('controllers.appointments.SessionLocal')
+    @patch("controllers.appointments.SessionLocal")
     def test_get_parsed_appointments_empty(self, mock_session_local):
         """Test getting parsed appointments when no data exists"""
         # Mock database session
@@ -103,7 +103,7 @@ class TestParsedAppointments:
         # Verify database session was closed
         mock_session.close.assert_called_once()
 
-    @patch('controllers.appointments.SessionLocal')
+    @patch("controllers.appointments.SessionLocal")
     def test_get_parsed_appointments_database_error(self, mock_session_local):
         """Test getting parsed appointments when database error occurs"""
         # Mock database session to raise an exception
@@ -118,6 +118,7 @@ class TestParsedAppointments:
 
         # Verify database session was still closed even with error
         mock_session.close.assert_called_once()
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

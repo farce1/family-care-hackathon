@@ -1,11 +1,13 @@
-from sqlalchemy import Column, String, Integer, Date, Text, Boolean, TIMESTAMP, ForeignKey, UUID, BIGINT, ARRAY
+import uuid
+
+from sqlalchemy import BIGINT, TIMESTAMP, UUID, Column, Date, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import BYTEA
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-import uuid
 
 Base = declarative_base()
+
 
 class User(Base):
     __tablename__ = "users"
@@ -17,6 +19,7 @@ class User(Base):
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
     updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now())
     last_login = Column(TIMESTAMP(timezone=True), nullable=True)
+
 
 class ParsedAppointment(Base):
     __tablename__ = "parsed_appointments"

@@ -2,9 +2,9 @@
  * API client for parsed appointments
  */
 
-import { ParsedAppointment } from '@/types/parsed-appointment';
-import { getApiBaseUrl, API_ENDPOINTS } from './config';
-import { getStoredToken } from './auth';
+import { ParsedAppointment } from "@/types/parsed-appointment";
+import { getApiBaseUrl, API_ENDPOINTS } from "./config";
+import { getStoredToken } from "./auth";
 
 /**
  * Get authorization headers if token exists
@@ -12,11 +12,11 @@ import { getStoredToken } from './auth';
 function getAuthHeaders(): Record<string, string> {
   const token = getStoredToken();
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
 
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   return headers;
@@ -30,14 +30,16 @@ export async function fetchParsedAppointments(): Promise<ParsedAppointment[]> {
   const url = `${baseUrl}${API_ENDPOINTS.PARSED_APPOINTMENTS}`;
 
   const response = await fetch(url, {
-    method: 'GET',
+    method: "GET",
     headers: getAuthHeaders(),
     // Don't cache in production to ensure fresh data
-    cache: 'no-store',
+    cache: "no-store",
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch parsed appointments: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `Failed to fetch parsed appointments: ${response.status} ${response.statusText}`
+    );
   }
 
   const data = await response.json();

@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -12,17 +12,17 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table"
-import { ChevronDown, Search } from "lucide-react"
+} from "@tanstack/react-table";
+import { ChevronDown, Search } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -30,28 +30,28 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Card, CardContent } from "@/components/ui/card"
+} from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Appointment } from "@/types/appointment"
+} from "@/components/ui/select";
+import { Appointment } from "@/types/appointment";
 
 interface FilterOption {
-  value: string
-  label: string
+  value: string;
+  label: string;
 }
 
 interface AppointmentsDataTableProps {
-  columns: ColumnDef<Appointment>[]
-  data: Appointment[]
-  selectedFilter?: string
-  onFilterChange?: (value: string) => void
-  filterOptions?: FilterOption[]
+  columns: ColumnDef<Appointment>[];
+  data: Appointment[];
+  selectedFilter?: string;
+  onFilterChange?: (value: string) => void;
+  filterOptions?: FilterOption[];
 }
 
 export function AppointmentsDataTable({
@@ -63,16 +63,16 @@ export function AppointmentsDataTable({
 }: AppointmentsDataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: "dateTime", desc: false }, // Default sort by date ascending (earliest first)
-  ])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [globalFilter, setGlobalFilter] = React.useState("")
+  ]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [globalFilter, setGlobalFilter] = React.useState("");
 
   // Reset sorting when filter changes to ensure proper ordering
   React.useEffect(() => {
     // Reset to default sort (by date ascending) when filter changes
-    setSorting([{ id: "dateTime", desc: false }])
-  }, [selectedFilter])
+    setSorting([{ id: "dateTime", desc: false }]);
+  }, [selectedFilter]);
 
   const table = useReactTable({
     data,
@@ -97,7 +97,7 @@ export function AppointmentsDataTable({
         pageSize: 10,
       },
     },
-  })
+  });
 
   return (
     <div className="w-full space-y-4">
@@ -133,10 +133,7 @@ export function AppointmentsDataTable({
         {/* Column Visibility Toggle */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              className="ml-auto bg-white border-border hover:bg-primary/5"
-            >
+            <Button variant="outline" className="ml-auto bg-white border-border hover:bg-primary/5">
               Columns <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -155,14 +152,14 @@ export function AppointmentsDataTable({
                     {column.id === "familyMemberName"
                       ? "Family Member"
                       : column.id === "facilityName"
-                      ? "Doctor/Clinic"
-                      : column.id === "appointmentType"
-                      ? "Type"
-                      : column.id === "dateTime"
-                      ? "Date & Time"
-                      : column.id}
+                        ? "Doctor/Clinic"
+                        : column.id === "appointmentType"
+                          ? "Type"
+                          : column.id === "dateTime"
+                            ? "Date & Time"
+                            : column.id}
                   </DropdownMenuCheckboxItem>
-                )
+                );
               })}
           </DropdownMenuContent>
         </DropdownMenu>
@@ -181,12 +178,9 @@ export function AppointmentsDataTable({
                         <TableHead key={header.id} className="font-bold text-foreground">
                           {header.isPlaceholder
                             ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
+                            : flexRender(header.column.columnDef.header, header.getContext())}
                         </TableHead>
-                      )
+                      );
                     })}
                   </TableRow>
                 ))}
@@ -201,20 +195,14 @@ export function AppointmentsDataTable({
                     >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </TableCell>
                       ))}
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
+                    <TableCell colSpan={columns.length} className="h-24 text-center">
                       <div className="flex flex-col items-center justify-center py-8">
                         <p className="text-lg font-semibold text-muted-foreground mb-2">
                           No appointments found
@@ -241,9 +229,7 @@ export function AppointmentsDataTable({
             <>
               Showing{" "}
               <span className="font-semibold text-foreground">
-                {table.getState().pagination.pageIndex *
-                  table.getState().pagination.pageSize +
-                  1}
+                {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
               </span>{" "}
               to{" "}
               <span className="font-semibold text-foreground">
@@ -280,10 +266,7 @@ export function AppointmentsDataTable({
               <span className="font-semibold text-foreground">
                 {table.getState().pagination.pageIndex + 1}
               </span>{" "}
-              of{" "}
-              <span className="font-semibold text-foreground">
-                {table.getPageCount()}
-              </span>
+              of <span className="font-semibold text-foreground">{table.getPageCount()}</span>
             </span>
           </div>
           <Button
@@ -298,5 +281,5 @@ export function AppointmentsDataTable({
         </div>
       </div>
     </div>
-  )
+  );
 }

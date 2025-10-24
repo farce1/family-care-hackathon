@@ -9,9 +9,7 @@ import { Document, DocumentGroup } from "@/types/document";
  */
 export function groupDocumentsByMonth(documents: Document[]): DocumentGroup[] {
   // Sort documents by date descending (newest first)
-  const sortedDocuments = [...documents].sort(
-    (a, b) => b.date.getTime() - a.date.getTime()
-  );
+  const sortedDocuments = [...documents].sort((a, b) => b.date.getTime() - a.date.getTime());
 
   // Group by month-year
   const grouped = new Map<string, Document[]>();
@@ -66,10 +64,7 @@ export function getDocumentTypeColor(type: string): {
   text: string;
   badge: string;
 } {
-  const colorMap: Record<
-    string,
-    { bg: string; text: string; badge: string }
-  > = {
+  const colorMap: Record<string, { bg: string; text: string; badge: string }> = {
     "Medical Record": {
       bg: "bg-blue-50",
       text: "text-blue-600",

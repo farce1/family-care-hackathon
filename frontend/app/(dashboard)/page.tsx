@@ -1,6 +1,5 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from "react";
 import { Particles } from "@/components/ui/particles";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,12 +15,7 @@ import {
 import { DocumentTimeline } from "@/components/document-timeline";
 import { BookAppointmentDialog } from "@/components/book-appointment-dialog";
 import { UploadMedicalRecordDialog } from "@/components/upload-medical-record-dialog";
-import { AppointmentReminderPopup } from "@/components/appointment-reminder-popup";
-import {
-  currentUser,
-  getUpcomingAppointments,
-  getArchivalAppointments,
-} from "@/lib/mock-data";
+import { currentUser, getUpcomingAppointments, getArchivalAppointments } from "@/lib/mock-data";
 import { useParsedAppointments } from "@/lib/hooks/use-parsed-appointments";
 import {
   Heart,
@@ -87,31 +81,9 @@ function getStatusDisplay(status: string) {
 export default function Home() {
   const upcomingAppointments = getUpcomingAppointments();
   const archivalAppointments = getArchivalAppointments();
-  const [showReminderPopup, setShowReminderPopup] = useState(false);
-  const [showBookAppointmentDialog, setShowBookAppointmentDialog] = useState(false);
 
   // Fetch parsed appointments from backend
   const { data: documents, isLoading, isError, error } = useParsedAppointments();
-
-  // Check for completed appointments older than 30 days and show reminder
-  useEffect(() => {
-    const now = new Date();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(now.getDate() - 30);
-
-    const oldCompletedAppointments = archivalAppointments.filter(
-      (apt) => apt.status === "completed" && apt.dateTime < thirtyDaysAgo
-    );
-
-    if (oldCompletedAppointments.length > 0) {
-      // Show popup after a short delay to let the page load
-      const timer = setTimeout(() => {
-        setShowReminderPopup(true);
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [archivalAppointments]);
 
   return (
     <div className="relative h-screen bg-gradient-to-br from-background via-background to-background/90 overflow-hidden">
@@ -178,9 +150,11 @@ export default function Home() {
                 <div className="flex items-center justify-center h-64">
                   <div className="flex flex-col items-center gap-3 max-w-md text-center">
                     <AlertCircle className="w-8 h-8 text-red-500" />
-                    <p className="text-sm font-medium text-red-700">Failed to load health records</p>
+                    <p className="text-sm font-medium text-red-700">
+                      Failed to load health records
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      {error instanceof Error ? error.message : 'An unknown error occurred'}
+                      {error instanceof Error ? error.message : "An unknown error occurred"}
                     </p>
                   </div>
                 </div>
@@ -198,7 +172,10 @@ export default function Home() {
           </TabsContent>
 
           {/* Appointments Tab */}
-          <TabsContent value="appointments" className="mt-0 flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-300 scrollbar-track-orange-50">
+          <TabsContent
+            value="appointments"
+            className="mt-0 flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-300 scrollbar-track-orange-50"
+          >
             {/* Upcoming Appointments */}
             <div className="mb-6">
               <div className="mb-3">
@@ -309,9 +286,7 @@ export default function Home() {
                 <h2 className="text-xl font-bold text-orange-600 mb-1 font-[family-name:var(--font-quicksand)]">
                   Appointment History
                 </h2>
-                <p className="text-muted-foreground text-sm">
-                  Past and completed appointments
-                </p>
+                <p className="text-muted-foreground text-sm">Past and completed appointments</p>
               </div>
 
               <Card className="bg-white/80 backdrop-blur-sm border-border overflow-hidden">
@@ -408,14 +383,6 @@ export default function Home() {
           </TabsContent>
         </Tabs>
       </div>
-
-      {/* Appointment Reminder Popup */}
-      <AppointmentReminderPopup
-        appointments={archivalAppointments}
-        isOpen={showReminderPopup}
-        onClose={() => setShowReminderPopup(false)}
-        onBookNew={() => setShowBookAppointmentDialog(true)}
-      />
     </div>
   );
 }

@@ -1,36 +1,43 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useRouter } from "next/navigation"
-import { LogOut, User, Mail, Phone, Edit2, Calendar, Droplet, AlertCircle, FileText, Loader2 } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
+import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { currentUser } from "@/lib/mock-data"
-import { useParsedAppointments } from "@/lib/hooks/use-parsed-appointments"
-import { logout } from "@/lib/api/auth"
+  LogOut,
+  User,
+  Mail,
+  Phone,
+  Edit2,
+  Calendar,
+  Droplet,
+  AlertCircle,
+  FileText,
+  Loader2,
+} from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { currentUser } from "@/lib/mock-data";
+import { useParsedAppointments } from "@/lib/hooks/use-parsed-appointments";
+import { logout } from "@/lib/api/auth";
 
 interface UserProfile {
-  name: string
-  email: string
-  phone: string
-  avatarUrl?: string
+  name: string;
+  email: string;
+  phone: string;
+  avatarUrl?: string;
 }
 
 export function ProfilePopup() {
-  const router = useRouter()
-  const [isEditing, setIsEditing] = React.useState(false)
-  const [open, setOpen] = React.useState(false)
+  const router = useRouter();
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
 
   // Fetch parsed appointments to get document count
-  const { data: documents, isLoading: isLoadingDocs } = useParsedAppointments()
+  const { data: documents, isLoading: isLoadingDocs } = useParsedAppointments();
 
   // Mock user data - in a real app, this would come from auth context or API
   const [profile, setProfile] = React.useState<UserProfile>({
@@ -38,38 +45,38 @@ export function ProfilePopup() {
     email: "adams.k@example.com",
     phone: "+1 (555) 123-4567",
     avatarUrl: "https://i.pravatar.cc/120?img=12",
-  })
+  });
 
-  const [editedProfile, setEditedProfile] = React.useState<UserProfile>(profile)
+  const [editedProfile, setEditedProfile] = React.useState<UserProfile>(profile);
 
   const handleLogout = () => {
     // Clear authentication token and cookies
-    logout()
+    logout();
 
     // Close the popover
-    setOpen(false)
+    setOpen(false);
 
     // Redirect to login page
-    router.push("/login")
-    router.refresh()
-  }
+    router.push("/login");
+    router.refresh();
+  };
 
   const handleSave = () => {
-    setProfile(editedProfile)
-    setIsEditing(false)
-  }
+    setProfile(editedProfile);
+    setIsEditing(false);
+  };
 
   const handleCancel = () => {
-    setEditedProfile(profile)
-    setIsEditing(false)
-  }
+    setEditedProfile(profile);
+    setIsEditing(false);
+  };
 
   // Get initials for avatar fallback
   const initials = profile.name
     .split(" ")
     .map((n) => n[0])
     .join("")
-    .toUpperCase()
+    .toUpperCase();
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -82,9 +89,7 @@ export function ProfilePopup() {
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col items-start text-left">
-            <span className="text-sm font-semibold text-orange-900">
-              {profile.name}
-            </span>
+            <span className="text-sm font-semibold text-orange-900">{profile.name}</span>
             <span className="text-xs text-orange-600/70">View profile</span>
           </div>
         </button>
@@ -106,9 +111,7 @@ export function ProfilePopup() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
-                <span className="text-sm font-semibold text-orange-900">
-                  {profile.name}
-                </span>
+                <span className="text-sm font-semibold text-orange-900">{profile.name}</span>
                 <span className="text-xs text-orange-600/70">{currentUser.role}</span>
               </div>
             </div>
@@ -191,7 +194,9 @@ export function ProfilePopup() {
                   <AlertCircle className="h-4 w-4 text-orange-400" />
                   <div className="flex flex-col">
                     <span className="text-xs text-muted-foreground">Allergies</span>
-                    <span className="text-orange-900 font-medium">{currentUser.allergies.join(", ")}</span>
+                    <span className="text-orange-900 font-medium">
+                      {currentUser.allergies.join(", ")}
+                    </span>
                   </div>
                 </div>
               )}
@@ -208,9 +213,7 @@ export function ProfilePopup() {
                   <Input
                     id="name"
                     value={editedProfile.name}
-                    onChange={(e) =>
-                      setEditedProfile({ ...editedProfile, name: e.target.value })
-                    }
+                    onChange={(e) => setEditedProfile({ ...editedProfile, name: e.target.value })}
                     className="pl-9 border-orange-200 focus-visible:border-orange-400 focus-visible:ring-orange-400/20"
                   />
                 </div>
@@ -225,9 +228,7 @@ export function ProfilePopup() {
                     id="email"
                     type="email"
                     value={editedProfile.email}
-                    onChange={(e) =>
-                      setEditedProfile({ ...editedProfile, email: e.target.value })
-                    }
+                    onChange={(e) => setEditedProfile({ ...editedProfile, email: e.target.value })}
                     className="pl-9 border-orange-200 focus-visible:border-orange-400 focus-visible:ring-orange-400/20"
                   />
                 </div>
@@ -242,9 +243,7 @@ export function ProfilePopup() {
                     id="phone"
                     type="tel"
                     value={editedProfile.phone}
-                    onChange={(e) =>
-                      setEditedProfile({ ...editedProfile, phone: e.target.value })
-                    }
+                    onChange={(e) => setEditedProfile({ ...editedProfile, phone: e.target.value })}
                     className="pl-9 border-orange-200 focus-visible:border-orange-400 focus-visible:ring-orange-400/20"
                   />
                 </div>
@@ -284,5 +283,5 @@ export function ProfilePopup() {
         </div>
       </PopoverContent>
     </Popover>
-  )
+  );
 }

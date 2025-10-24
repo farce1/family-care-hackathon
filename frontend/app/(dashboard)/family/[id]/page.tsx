@@ -14,11 +14,7 @@ import { DocumentTimeline } from "@/components/document-timeline";
 import { Particles } from "@/components/ui/particles";
 import { BookAppointmentDialog } from "@/components/book-appointment-dialog";
 import { UploadMedicalRecordDialog } from "@/components/upload-medical-record-dialog";
-import {
-  getFamilyMember,
-  getDocumentsForMember,
-  getAppointmentsForMember,
-} from "@/lib/mock-data";
+import { getFamilyMember, getDocumentsForMember, getAppointmentsForMember } from "@/lib/mock-data";
 import {
   Heart,
   Calendar,
@@ -361,42 +357,54 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
                           >
                             <TableHead
                               className={`font-semibold ${
-                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                                member.accentColor === "orange"
+                                  ? "text-orange-900"
+                                  : "text-amber-900"
                               }`}
                             >
                               Date
                             </TableHead>
                             <TableHead
                               className={`font-semibold ${
-                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                                member.accentColor === "orange"
+                                  ? "text-orange-900"
+                                  : "text-amber-900"
                               }`}
                             >
                               Time
                             </TableHead>
                             <TableHead
                               className={`font-semibold ${
-                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                                member.accentColor === "orange"
+                                  ? "text-orange-900"
+                                  : "text-amber-900"
                               }`}
                             >
                               Doctor/Provider
                             </TableHead>
                             <TableHead
                               className={`font-semibold ${
-                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                                member.accentColor === "orange"
+                                  ? "text-orange-900"
+                                  : "text-amber-900"
                               }`}
                             >
                               Type
                             </TableHead>
                             <TableHead
                               className={`font-semibold ${
-                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                                member.accentColor === "orange"
+                                  ? "text-orange-900"
+                                  : "text-amber-900"
                               }`}
                             >
                               Location
                             </TableHead>
                             <TableHead
                               className={`font-semibold ${
-                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                                member.accentColor === "orange"
+                                  ? "text-orange-900"
+                                  : "text-amber-900"
                               }`}
                             >
                               Status
@@ -540,42 +548,54 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
                           >
                             <TableHead
                               className={`font-semibold ${
-                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                                member.accentColor === "orange"
+                                  ? "text-orange-900"
+                                  : "text-amber-900"
                               }`}
                             >
                               Date
                             </TableHead>
                             <TableHead
                               className={`font-semibold ${
-                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                                member.accentColor === "orange"
+                                  ? "text-orange-900"
+                                  : "text-amber-900"
                               }`}
                             >
                               Time
                             </TableHead>
                             <TableHead
                               className={`font-semibold ${
-                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                                member.accentColor === "orange"
+                                  ? "text-orange-900"
+                                  : "text-amber-900"
                               }`}
                             >
                               Doctor/Provider
                             </TableHead>
                             <TableHead
                               className={`font-semibold ${
-                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                                member.accentColor === "orange"
+                                  ? "text-orange-900"
+                                  : "text-amber-900"
                               }`}
                             >
                               Type
                             </TableHead>
                             <TableHead
                               className={`font-semibold ${
-                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                                member.accentColor === "orange"
+                                  ? "text-orange-900"
+                                  : "text-amber-900"
                               }`}
                             >
                               Location
                             </TableHead>
                             <TableHead
                               className={`font-semibold ${
-                                member.accentColor === "orange" ? "text-orange-900" : "text-amber-900"
+                                member.accentColor === "orange"
+                                  ? "text-orange-900"
+                                  : "text-amber-900"
                               }`}
                             >
                               Status
@@ -697,10 +717,5 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
  * This enables static generation at build time
  */
 export function generateStaticParams() {
-  return [
-    { id: "1" },
-    { id: "2" },
-    { id: "3" },
-    { id: "4" },
-  ];
+  return [{ id: "1" }, { id: "2" }, { id: "3" }, { id: "4" }];
 }

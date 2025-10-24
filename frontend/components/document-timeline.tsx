@@ -5,13 +5,7 @@ import { Document } from "@/types/document";
 import { groupDocumentsByMonth, formatShortDate, getDocumentTypeColor } from "@/lib/document-utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   FileText,
   Pill,
@@ -24,7 +18,7 @@ import {
   File,
   Download,
   Calendar,
-  User
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -39,14 +33,14 @@ interface DocumentTimelineProps {
 function getDocumentIcon(type: string) {
   const iconMap: Record<string, React.ReactNode> = {
     "Medical Record": <Stethoscope className="w-4 h-4" />,
-    "Prescription": <Pill className="w-4 h-4" />,
+    Prescription: <Pill className="w-4 h-4" />,
     "Lab Result": <FlaskConical className="w-4 h-4" />,
-    "Vaccination": <Syringe className="w-4 h-4" />,
-    "Imaging": <ImageIcon className="w-4 h-4" />,
-    "Insurance": <ShieldCheck className="w-4 h-4" />,
-    "Referral": <FileCheck className="w-4 h-4" />,
-    "Diagnosis": <FileText className="w-4 h-4" />,
-    "Other": <File className="w-4 h-4" />,
+    Vaccination: <Syringe className="w-4 h-4" />,
+    Imaging: <ImageIcon className="w-4 h-4" />,
+    Insurance: <ShieldCheck className="w-4 h-4" />,
+    Referral: <FileCheck className="w-4 h-4" />,
+    Diagnosis: <FileText className="w-4 h-4" />,
+    Other: <File className="w-4 h-4" />,
   };
 
   return iconMap[type] || <File className="w-4 h-4" />;
@@ -146,9 +140,7 @@ export function DocumentTimeline({ documents, accentColor = "orange" }: Document
                       <div className="flex items-start gap-3">
                         {/* Document Icon */}
                         <div className={cn("p-2 rounded-lg shrink-0", colors.bg)}>
-                          <div className={colors.text}>
-                            {getDocumentIcon(doc.appointment_type)}
-                          </div>
+                          <div className={colors.text}>{getDocumentIcon(doc.appointment_type)}</div>
                         </div>
 
                         {/* Document Content */}
@@ -230,10 +222,12 @@ export function DocumentTimeline({ documents, accentColor = "orange" }: Document
             <>
               <DialogHeader>
                 <div className="flex items-start gap-3 mb-2">
-                  <div className={cn(
-                    "p-2 rounded-lg shrink-0",
-                    getDocumentTypeColor(selectedDocument.appointment_type).bg
-                  )}>
+                  <div
+                    className={cn(
+                      "p-2 rounded-lg shrink-0",
+                      getDocumentTypeColor(selectedDocument.appointment_type).bg
+                    )}
+                  >
                     <div className={getDocumentTypeColor(selectedDocument.appointment_type).text}>
                       {getDocumentIcon(selectedDocument.appointment_type)}
                     </div>
@@ -272,7 +266,9 @@ export function DocumentTimeline({ documents, accentColor = "orange" }: Document
 
                 {/* Metadata */}
                 <div className="border-t pt-4">
-                  <h4 className="text-sm font-semibold mb-3 text-foreground">Document Information</h4>
+                  <h4 className="text-sm font-semibold mb-3 text-foreground">
+                    Document Information
+                  </h4>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     {selectedDocument.fileSize && (
                       <div className="flex items-center gap-2">

@@ -2,7 +2,7 @@
  * Authentication utilities for the frontend
  */
 
-import { getApiBaseUrl } from './config';
+import { getApiBaseUrl } from "./config";
 
 export interface LoginRequest {
   email: string;
@@ -33,16 +33,16 @@ export async function login(request: LoginRequest): Promise<AuthResponse> {
   const url = `${baseUrl}/auth/login`;
 
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(request),
   });
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.detail || 'Login failed');
+    throw new Error(error.detail || "Login failed");
   }
 
   return response.json();
@@ -54,17 +54,17 @@ export async function login(request: LoginRequest): Promise<AuthResponse> {
 export async function getCurrentUser(): Promise<User> {
   const token = getStoredToken();
   if (!token) {
-    throw new Error('No authentication token found');
+    throw new Error("No authentication token found");
   }
 
   const baseUrl = getApiBaseUrl();
   const url = `${baseUrl}/auth/me`;
 
   const response = await fetch(url, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
   });
 
@@ -72,9 +72,9 @@ export async function getCurrentUser(): Promise<User> {
     if (response.status === 401) {
       // Token expired or invalid, clear it
       clearStoredToken();
-      throw new Error('Authentication expired. Please login again.');
+      throw new Error("Authentication expired. Please login again.");
     }
-    throw new Error('Failed to get user information');
+    throw new Error("Failed to get user information");
   }
 
   return response.json();
@@ -84,8 +84,8 @@ export async function getCurrentUser(): Promise<User> {
  * Store JWT token in localStorage and set a session cookie
  */
 export function storeToken(token: string): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('auth_token', token);
+  if (typeof window !== "undefined") {
+    localStorage.setItem("auth_token", token);
     // Also set a session cookie for middleware
     document.cookie = "auth-token=true; path=/; samesite=strict";
   }
@@ -95,8 +95,8 @@ export function storeToken(token: string): void {
  * Get stored JWT token from localStorage
  */
 export function getStoredToken(): string | null {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('auth_token');
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("auth_token");
   }
   return null;
 }
@@ -105,8 +105,8 @@ export function getStoredToken(): string | null {
  * Clear stored JWT token
  */
 export function clearStoredToken(): void {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('auth_token');
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("auth_token");
   }
 }
 
@@ -121,7 +121,7 @@ export function isAuthenticated(): boolean {
  * Logout user by clearing token and cookie
  */
 export function logout(): void {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     clearStoredToken();
     // Clear the auth cookie
     document.cookie = "auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=strict";

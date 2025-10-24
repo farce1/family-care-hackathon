@@ -1,35 +1,36 @@
+import logging
+import os
+import sys
+
 from fastapi import FastAPI
-from controllers.upcoming_appointments import router as upcoming_router
-from controllers.appointments import router as appointments_router
-from controllers.auth import router as auth_router
 from fastapi.middleware.cors import CORSMiddleware
-from models import Base, User
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import os
-import logging
-import sys
+
+from controllers.appointments import router as appointments_router
+from controllers.auth import router as auth_router
+from controllers.upcoming_appointments import router as upcoming_router
+from models import User
 
 # Configure logging to output to stdout
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    stream=sys.stdout
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    stream=sys.stdout,
 )
 
 # Database setup
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://familycare:familycare@postgres:5432/familycare")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", "postgresql://familycare:familycare@postgres:5432/familycare"
+)
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 app = FastAPI()
 
 # Default MCP user configuration
-DEFAULT_MCP_USER = {
-    "email": "mcpuser@example.com",
-    "first_name": "MCP",
-    "last_name": "User"
-}
+DEFAULT_MCP_USER = {"email": "mcpuser@example.com", "first_name": "MCP", "last_name": "User"}
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -44,19 +45,24 @@ async def startup_event():
             default_user = User(
                 email=DEFAULT_MCP_USER["email"],
                 first_name=DEFAULT_MCP_USER["first_name"],
-                last_name=DEFAULT_MCP_USER["last_name"]
+                last_name=DEFAULT_MCP_USER["last_name"],
             )
             db.add(default_user)
             db.commit()
             db.refresh(default_user)
-            print(f"✅ Created default MCP user: {DEFAULT_MCP_USER['email']} (ID: {default_user.id})")
+            print(
+                f"✅ Created default MCP user: {DEFAULT_MCP_USER['email']} (ID: {default_user.id})"
+            )
         else:
-            print(f"✅ Default MCP user already exists: {DEFAULT_MCP_USER['email']} (ID: {existing_user.id})")
+            print(
+                f"✅ Default MCP user already exists: {DEFAULT_MCP_USER['email']} (ID: {existing_user.id})"
+            )
     except Exception as e:
         print(f"❌ Error creating default MCP user: {e}")
         db.rollback()
     finally:
         db.close()
+
 
 # Configure CORS
 app.add_middleware(
@@ -71,7 +77,3 @@ app.add_middleware(
 app.include_router(auth_router, prefix="/auth", tags=["authentication"])
 app.include_router(appointments_router)
 app.include_router(upcoming_router)
-
-@app.get("/hello")
-async def hello():
-    return {"message": "world"}

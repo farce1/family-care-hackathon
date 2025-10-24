@@ -2,8 +2,8 @@
  * API client for PDF upload and parsing
  */
 
-import { getApiBaseUrl, API_ENDPOINTS } from './config';
-import { getStoredToken } from './auth';
+import { getApiBaseUrl, API_ENDPOINTS } from "./config";
+import { getStoredToken } from "./auth";
 
 /**
  * Response from the /parse-pdf endpoint
@@ -41,14 +41,14 @@ export async function uploadPdfFile(
   const url = `${baseUrl}${API_ENDPOINTS.PARSE_PDF}`;
 
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append("file", file);
 
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
 
     // Track upload progress
     if (onProgress) {
-      xhr.upload.addEventListener('progress', (event) => {
+      xhr.upload.addEventListener("progress", (event) => {
         if (event.lengthComputable) {
           const progress = Math.round((event.loaded / event.total) * 100);
           onProgress(progress);
@@ -57,14 +57,14 @@ export async function uploadPdfFile(
     }
 
     // Handle completion
-    xhr.addEventListener('load', () => {
+    xhr.addEventListener("load", () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
           const response = JSON.parse(xhr.responseText);
           resolve(response);
         } catch {
           reject({
-            detail: 'Failed to parse server response',
+            detail: "Failed to parse server response",
             status: xhr.status,
           });
         }
@@ -85,17 +85,17 @@ export async function uploadPdfFile(
     });
 
     // Handle network errors
-    xhr.addEventListener('error', () => {
+    xhr.addEventListener("error", () => {
       reject({
-        detail: 'Network error occurred during upload',
+        detail: "Network error occurred during upload",
         status: 0,
       });
     });
 
     // Handle timeout
-    xhr.addEventListener('timeout', () => {
+    xhr.addEventListener("timeout", () => {
       reject({
-        detail: 'Upload request timed out',
+        detail: "Upload request timed out",
         status: 0,
       });
     });
@@ -104,12 +104,12 @@ export async function uploadPdfFile(
     xhr.timeout = 60000;
 
     // Open and send the request
-    xhr.open('POST', url);
+    xhr.open("POST", url);
 
     // Add authorization header if token exists
     const token = getStoredToken();
     if (token) {
-      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
     }
 
     xhr.send(formData);

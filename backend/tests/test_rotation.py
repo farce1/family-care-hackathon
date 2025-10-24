@@ -2,16 +2,20 @@
 """
 Test script to verify PDF rotation functionality with a rotated PDF file.
 """
+
 import io
-import PyPDF2
 from pathlib import Path
+
+import PyPDF2
+
 try:
     import pytesseract
-    from PIL import Image
     from pdf2image import convert_from_bytes
+
     OCR_AVAILABLE = True
 except ImportError:
     OCR_AVAILABLE = False
+
 
 def extract_text_with_rotation(pdf_bytes):
     """Extract text from PDF, trying different rotations and OCR if needed."""
@@ -42,9 +46,9 @@ def extract_text_with_rotation(pdf_bytes):
             text_content = ""
             for i, page in enumerate(reader.pages):
                 page_text = page.extract_text()
-                print(f"Page {i+1} extracted text length: {len(page_text)}")
+                print(f"Page {i + 1} extracted text length: {len(page_text)}")
                 if page_text.strip():
-                    print(f"Page {i+1} sample text: {page_text[:100]}...")
+                    print(f"Page {i + 1} sample text: {page_text[:100]}...")
                 text_content += page_text + "\n"
 
             # Check if we got meaningful text
@@ -56,7 +60,9 @@ def extract_text_with_rotation(pdf_bytes):
                 print("--- End preview ---")
                 return text_content
             else:
-                print(f"No sufficient text extracted with {rotation}° rotation, trying OCR...")                # Try OCR if available and regular extraction failed
+                print(
+                    f"No sufficient text extracted with {rotation}° rotation, trying OCR..."
+                )  # Try OCR if available and regular extraction failed
                 if OCR_AVAILABLE:
                     print("Attempting OCR...")
                     try:
@@ -69,19 +75,25 @@ def extract_text_with_rotation(pdf_bytes):
 
                         ocr_text = ""
                         for i, image in enumerate(images):
-                            print(f"Performing OCR on page {i+1}...")
+                            print(f"Performing OCR on page {i + 1}...")
 
                             # Apply rotation to image if needed
                             if rotation > 0:
-                                image = image.rotate(-rotation, expand=True)  # PIL uses counterclockwise rotation
+                                image = image.rotate(
+                                    -rotation, expand=True
+                                )  # PIL uses counterclockwise rotation
 
                             # Perform OCR on the image
-                            page_text = pytesseract.image_to_string(image, lang='pol+eng')  # Support Polish and English
-                            print(f"OCR extracted {len(page_text)} characters from page {i+1}")
+                            page_text = pytesseract.image_to_string(
+                                image, lang="pol+eng"
+                            )  # Support Polish and English
+                            print(f"OCR extracted {len(page_text)} characters from page {i + 1}")
                             ocr_text += page_text + "\n"
 
                         # Check if OCR extracted meaningful text
-                        if ocr_text.strip() and len(ocr_text.strip()) > 20:  # OCR might extract some garbage, so higher threshold
+                        if (
+                            ocr_text.strip() and len(ocr_text.strip()) > 20
+                        ):  # OCR might extract some garbage, so higher threshold
                             print(f"Successfully extracted text with OCR at {rotation}° rotation")
                             print(f"OCR Text length: {len(ocr_text)} characters")
                             print("--- First 500 characters from OCR ---")
@@ -101,6 +113,7 @@ def extract_text_with_rotation(pdf_bytes):
     # If all rotations failed, return empty string
     print("All rotations and OCR attempts failed to extract text")
     return ""
+
 
 def main():
     """Test the rotation functionality with the rotated PDF file."""
@@ -130,7 +143,7 @@ def main():
 
     try:
         # Read the PDF file
-        with open(test_file_path, 'rb') as f:
+        with Path(test_file_path).open("rb") as f:
             pdf_content = f.read()
 
         pdf_bytes = io.BytesIO(pdf_content)
@@ -143,6 +156,7 @@ def main():
 
     except Exception as e:
         print(f"Error testing PDF rotation: {e}")
+
 
 if __name__ == "__main__":
     main()

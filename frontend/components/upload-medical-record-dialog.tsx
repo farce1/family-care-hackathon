@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useState, useRef, useCallback } from "react"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { z } from "zod"
+import { useState, useRef, useCallback } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -10,22 +10,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { BorderBeam } from "@/components/ui/border-beam"
-import { ShimmerButton } from "@/components/ui/shimmer-button"
-import {
-  Upload,
-  FileText,
-  X,
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
-  RotateCw,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
-import { uploadPdfFile, type UploadError } from "@/lib/api/upload"
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { BorderBeam } from "@/components/ui/border-beam";
+import { ShimmerButton } from "@/components/ui/shimmer-button";
+import { Upload, FileText, X, CheckCircle2, AlertCircle, Loader2, RotateCw } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { uploadPdfFile, type UploadError } from "@/lib/api/upload";
 
 // File validation schema
 const fileSchema = z.object({
@@ -37,51 +29,49 @@ const fileSchema = z.object({
     .refine((file) => file.size <= 10 * 1024 * 1024, {
       message: "File size must be less than 10MB",
     }),
-})
+});
 
 // File upload status
-type FileStatus = "pending" | "uploading" | "success" | "error"
+type FileStatus = "pending" | "uploading" | "success" | "error";
 
 interface FileWithStatus {
-  id: string
-  file: File
-  status: FileStatus
-  progress: number
-  error?: string
-  retryCount?: number
+  id: string;
+  file: File;
+  status: FileStatus;
+  progress: number;
+  error?: string;
+  retryCount?: number;
 }
 
 const MAX_RETRY_ATTEMPTS = 3;
 
 export function UploadMedicalRecordDialog() {
-  const [open, setOpen] = useState(false)
-  const [files, setFiles] = useState<FileWithStatus[]>([])
-  const [isDragOver, setIsDragOver] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const queryClient = useQueryClient()
+  const [open, setOpen] = useState(false);
+  const [files, setFiles] = useState<FileWithStatus[]>([]);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
 
   // Upload mutation with automatic retry on error
   const uploadMutation = useMutation({
     mutationFn: async ({ file, id }: { file: File; id: string }) => {
       return uploadPdfFile(file, (progress) => {
         setFiles((prev) =>
-          prev.map((f) =>
-            f.id === id ? { ...f, progress, status: "uploading" as FileStatus } : f
-          )
-        )
-      })
+          prev.map((f) => (f.id === id ? { ...f, progress, status: "uploading" as FileStatus } : f))
+        );
+      });
     },
     onSuccess: (data, variables) => {
       setFiles((prev) =>
         prev.map((f) =>
           f.id === variables.id ? { ...f, status: "success" as FileStatus, progress: 100 } : f
         )
-      )
+      );
       // Invalidate the parsed appointments query to refetch updated data
-      queryClient.invalidateQueries({ queryKey: ['parsed-appointments'] })
+      queryClient.invalidateQueries({ queryKey: ["parsed-appointments"] });
     },
     onError: (error: UploadError, variables) => {
-      const errorMessage = error.detail || "Upload failed"
+      const errorMessage = error.detail || "Upload failed";
       setFiles((prev) =>
         prev.map((f) =>
           f.id === variables.id
@@ -92,18 +82,18 @@ export function UploadMedicalRecordDialog() {
               }
             : f
         )
-      )
+      );
     },
-  })
+  });
 
   const handleFileSelection = useCallback((selectedFiles: FileList | null) => {
-    if (!selectedFiles) return
+    if (!selectedFiles) return;
 
-    const newFiles: FileWithStatus[] = []
-    const errors: string[] = []
+    const newFiles: FileWithStatus[] = [];
+    const errors: string[] = [];
 
     Array.from(selectedFiles).forEach((file) => {
-      const validation = fileSchema.safeParse({ file })
+      const validation = fileSchema.safeParse({ file });
       if (validation.success) {
         newFiles.push({
           id: `${Date.now()}-${Math.random()}`,
@@ -111,57 +101,57 @@ export function UploadMedicalRecordDialog() {
           status: "pending",
           progress: 0,
           retryCount: 0,
-        })
+        });
       } else {
-        errors.push(`${file.name}: ${validation.error.errors[0].message}`)
+        errors.push(`${file.name}: ${validation.error.errors[0].message}`);
       }
-    })
+    });
 
     if (errors.length > 0) {
-      alert(`Some files were not added:\n${errors.join("\n")}`)
+      alert(`Some files were not added:\n${errors.join("\n")}`);
     }
 
-    setFiles((prev) => [...prev, ...newFiles])
-  }, [])
+    setFiles((prev) => [...prev, ...newFiles]);
+  }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(true)
-  }, [])
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(false)
-  }, [])
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
-      e.preventDefault()
-      setIsDragOver(false)
-      handleFileSelection(e.dataTransfer.files)
+      e.preventDefault();
+      setIsDragOver(false);
+      handleFileSelection(e.dataTransfer.files);
     },
     [handleFileSelection]
-  )
+  );
 
   const handleFileInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      handleFileSelection(e.target.files)
+      handleFileSelection(e.target.files);
       // Reset input value to allow selecting the same file again
-      e.target.value = ""
+      e.target.value = "";
     },
     [handleFileSelection]
-  )
+  );
 
   const removeFile = useCallback((id: string) => {
-    setFiles((prev) => prev.filter((f) => f.id !== id))
-  }, [])
+    setFiles((prev) => prev.filter((f) => f.id !== id));
+  }, []);
 
   const retryFile = useCallback(
     async (id: string) => {
-      const fileItem = files.find((f) => f.id === id)
-      if (!fileItem) return
+      const fileItem = files.find((f) => f.id === id);
+      if (!fileItem) return;
 
-      const currentRetryCount = fileItem.retryCount || 0
+      const currentRetryCount = fileItem.retryCount || 0;
       if (currentRetryCount >= MAX_RETRY_ATTEMPTS) {
         setFiles((prev) =>
           prev.map((f) =>
@@ -172,8 +162,8 @@ export function UploadMedicalRecordDialog() {
                 }
               : f
           )
-        )
-        return
+        );
+        return;
       }
 
       // Reset file status and increment retry count
@@ -189,77 +179,77 @@ export function UploadMedicalRecordDialog() {
               }
             : f
         )
-      )
+      );
 
       // Retry upload
       try {
-        await uploadMutation.mutateAsync({ file: fileItem.file, id: fileItem.id })
+        await uploadMutation.mutateAsync({ file: fileItem.file, id: fileItem.id });
       } catch {
         // Error handled by mutation onError
       }
     },
     [files, uploadMutation]
-  )
+  );
 
   const handleUpload = useCallback(async () => {
-    const pendingFiles = files.filter((f) => f.status === "pending")
+    const pendingFiles = files.filter((f) => f.status === "pending");
 
     // Upload all pending files with individual error handling
     await Promise.allSettled(
       pendingFiles.map((fileItem) =>
         uploadMutation.mutateAsync({ file: fileItem.file, id: fileItem.id })
       )
-    )
-  }, [files, uploadMutation])
+    );
+  }, [files, uploadMutation]);
 
   const handleClose = useCallback(() => {
     // Only allow closing if no files are uploading
-    const hasUploading = files.some((f) => f.status === "uploading")
+    const hasUploading = files.some((f) => f.status === "uploading");
     if (!hasUploading) {
-      setOpen(false)
+      setOpen(false);
       // Clear files after a short delay to allow animation
-      setTimeout(() => setFiles([]), 300)
+      setTimeout(() => setFiles([]), 300);
     }
-  }, [files])
+  }, [files]);
 
   const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return "0 Bytes"
-    const k = 1024
-    const sizes = ["Bytes", "KB", "MB", "GB"]
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i]
-  }
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
+  };
 
   const getStatusIcon = (status: FileStatus) => {
     switch (status) {
       case "pending":
-        return <FileText className="w-5 h-5 text-orange-600" />
+        return <FileText className="w-5 h-5 text-orange-600" />;
       case "uploading":
-        return <Loader2 className="w-5 h-5 text-orange-600 animate-spin" />
+        return <Loader2 className="w-5 h-5 text-orange-600 animate-spin" />;
       case "success":
-        return <CheckCircle2 className="w-5 h-5 text-green-600" />
+        return <CheckCircle2 className="w-5 h-5 text-green-600" />;
       case "error":
-        return <AlertCircle className="w-5 h-5 text-red-600" />
+        return <AlertCircle className="w-5 h-5 text-red-600" />;
     }
-  }
+  };
 
-  const pendingCount = files.filter((f) => f.status === "pending").length
-  const uploadingCount = files.filter((f) => f.status === "uploading").length
-  const successCount = files.filter((f) => f.status === "success").length
-  const errorCount = files.filter((f) => f.status === "error").length
+  const pendingCount = files.filter((f) => f.status === "pending").length;
+  const uploadingCount = files.filter((f) => f.status === "uploading").length;
+  const successCount = files.filter((f) => f.status === "success").length;
+  const errorCount = files.filter((f) => f.status === "error").length;
   const retryableErrorCount = files.filter(
     (f) => f.status === "error" && (f.retryCount || 0) < MAX_RETRY_ATTEMPTS
-  ).length
+  ).length;
 
   const handleRetryAll = useCallback(async () => {
     const failedFiles = files.filter(
       (f) => f.status === "error" && (f.retryCount || 0) < MAX_RETRY_ATTEMPTS
-    )
+    );
 
     for (const fileItem of failedFiles) {
-      await retryFile(fileItem.id)
+      await retryFile(fileItem.id);
     }
-  }, [files, retryFile])
+  }, [files, retryFile]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -299,7 +289,9 @@ export function UploadMedicalRecordDialog() {
                 : "border-border bg-orange-50/30 hover:bg-orange-50/50"
             )}
           >
-            {isDragOver && <BorderBeam size={100} duration={3} colorFrom="#fb923c" colorTo="#f97316" />}
+            {isDragOver && (
+              <BorderBeam size={100} duration={3} colorFrom="#fb923c" colorTo="#f97316" />
+            )}
 
             <div className="flex flex-col items-center justify-center gap-3 text-center">
               <div className="p-4 bg-orange-100 rounded-full">
@@ -360,9 +352,7 @@ export function UploadMedicalRecordDialog() {
                     )}
                   >
                     <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 mt-0.5">
-                        {getStatusIcon(fileItem.status)}
-                      </div>
+                      <div className="flex-shrink-0 mt-0.5">{getStatusIcon(fileItem.status)}</div>
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
@@ -426,9 +416,7 @@ export function UploadMedicalRecordDialog() {
 
                         {/* Success Message */}
                         {fileItem.status === "success" && (
-                          <p className="text-xs text-green-600 mt-2 font-medium">
-                            Upload complete
-                          </p>
+                          <p className="text-xs text-green-600 mt-2 font-medium">Upload complete</p>
                         )}
                       </div>
                     </div>
@@ -462,9 +450,7 @@ export function UploadMedicalRecordDialog() {
               disabled={uploadingCount > 0}
               className="rounded-xl"
             >
-              {successCount > 0 && pendingCount === 0 && uploadingCount === 0
-                ? "Close"
-                : "Cancel"}
+              {successCount > 0 && pendingCount === 0 && uploadingCount === 0 ? "Close" : "Cancel"}
             </Button>
 
             {retryableErrorCount > 0 && uploadingCount === 0 && (
@@ -503,5 +489,5 @@ export function UploadMedicalRecordDialog() {
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

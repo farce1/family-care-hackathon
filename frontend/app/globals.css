@@ -44,22 +44,24 @@
   --animate-shimmer-slide: shimmer-slide var(--speed) ease-in-out infinite alternate;
   --animate-spin-around: spin-around calc(var(--speed) * 2) infinite linear;
   @keyframes shimmer-slide {
-  to {
-    transform: translate(calc(100cqw - 100%), 0);
+    to {
+      transform: translate(calc(100cqw - 100%), 0);
     }
   }
   @keyframes spin-around {
-  0% {
-    transform: translateZ(0) rotate(0);
+    0% {
+      transform: translateZ(0) rotate(0);
     }
-  15%, 35% {
-    transform: translateZ(0) rotate(90deg);
+    15%,
+    35% {
+      transform: translateZ(0) rotate(90deg);
     }
-  65%, 85% {
-    transform: translateZ(0) rotate(270deg);
+    65%,
+    85% {
+      transform: translateZ(0) rotate(270deg);
     }
-  100% {
-    transform: translateZ(0) rotate(360deg);
+    100% {
+      transform: translateZ(0) rotate(360deg);
     }
   }
 }
@@ -82,7 +84,7 @@
   --secondary-foreground: oklch(0.3 0.02 220);
   /* #E8DFCA - Warm beige muted */
   --muted: oklch(0.89 0.02 75);
-  --muted-foreground: oklch(0.50 0.02 220);
+  --muted-foreground: oklch(0.5 0.02 220);
   /* #CBDCEB - Light blue accent (darker for readability) */
   --accent: oklch(0.75 0.06 230);
   --accent-foreground: oklch(0.3 0.02 220);
@@ -100,7 +102,7 @@
   --chart-5: oklch(0.65 0.15 155); /* emerald */
   /* Sidebar colors */
   --sidebar: oklch(0.98 0.01 75);
-  --sidebar-foreground: oklch(0.30 0.02 220);
+  --sidebar-foreground: oklch(0.3 0.02 220);
   --sidebar-primary: oklch(0.64 0.08 245);
   --sidebar-primary-foreground: oklch(0.99 0.01 75);
   --sidebar-accent: oklch(0.87 0.03 230);

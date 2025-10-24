@@ -55,8 +55,7 @@ export const familyMembers: FamilyMember[] = [
     id: "4",
     name: "Maniek",
     role: "Dog",
-    avatar:
-      "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=120&h=120&fit=crop",
+    avatar: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=120&h=120&fit=crop",
     initials: "MN",
     dateOfBirth: "2020-04-18",
     accentColor: "amber",

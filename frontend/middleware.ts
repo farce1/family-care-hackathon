@@ -1,27 +1,27 @@
-import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
   // Get the pathname
-  const path = request.nextUrl.pathname
+  const path = request.nextUrl.pathname;
 
   // Define public paths that don't require authentication
-  const isPublicPath = path === "/login"
+  const isPublicPath = path === "/login";
 
   // Check for authentication token cookie
-  const isLoggedIn = request.cookies.get("auth-token")?.value === "true"
+  const isLoggedIn = request.cookies.get("auth-token")?.value === "true";
 
   // Redirect to login if accessing protected route while not logged in
   if (!isPublicPath && !isLoggedIn) {
-    return NextResponse.redirect(new URL("/login", request.url))
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   // Redirect to home if accessing login while already logged in
   if (path === "/login" && isLoggedIn) {
-    return NextResponse.redirect(new URL("/", request.url))
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
-  return NextResponse.next()
+  return NextResponse.next();
 }
 
 export const config = {
@@ -35,4 +35,4 @@ export const config = {
      */
     "/((?!api|_next/static|_next/image|favicon.ico).*)",
   ],
-}
+};

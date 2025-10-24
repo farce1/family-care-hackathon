@@ -16,3 +16,4 @@ passlib[bcrypt]==1.7.4
 pytesseract==0.3.13
 Pillow==10.4.0
 pdf2image==1.17.0
+ruff==0.9.1
