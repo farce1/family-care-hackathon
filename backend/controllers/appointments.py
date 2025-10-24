@@ -24,11 +24,14 @@ except ImportError:
 # Load environment variables
 load_dotenv()
 
-# Initialize OpenAI client
-client = OpenAI(api_key=os.getenv("API_KEY"))
+# Validate and initialize OpenAI client
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or os.getenv("API_KEY")
+if not OPENAI_API_KEY:
+    raise ValueError("OPENAI_API_KEY environment variable is not set")
+client = OpenAI(api_key=OPENAI_API_KEY)
 
-# Database setup
-DATABASE_URL = "postgresql://familycare:familycare@postgres:5432/familycare"
+# Database setup - use environment variable with fallback
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://familycare:familycare@postgres:5432/familycare")
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -73,6 +76,9 @@ class ParsedAppointmentResponse(BaseModel):
 # Create router
 router = APIRouter()
 
+# Maximum file size: 15MB
+MAX_FILE_SIZE = 15 * 1024 * 1024
+
 @router.post("/parse-pdf")
 async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """
@@ -97,12 +103,23 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
     try:
         # Read PDF content
         pdf_content = await file.read()
+
+        # Validate file size
+        if len(pdf_content) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File too large. Maximum size is {MAX_FILE_SIZE / (1024 * 1024):.0f}MB"
+            )
+
+        if len(pdf_content) == 0:
+            raise HTTPException(status_code=400, detail="File is empty")
+
         pdf_file = io.BytesIO(pdf_content)
 
         # Function to extract text with rotation attempts and OCR fallback
         def extract_text_with_rotation(pdf_bytes):
             logging.info("Starting text extraction with rotation attempts")
-            rotations = [0, 90, 180, 270, 360]  # Try each rotation up to 360 degrees
+            rotations = [0, 90, 180, 270]  # Try each rotation
 
             for rotation in rotations:
                 logging.info(f"Attempting rotation: {rotation} degrees")
@@ -169,17 +186,17 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
                                 logging.warning(f"OCR for rotation {rotation} extracted insufficient text (length: {len(stripped_ocr)})")
 
                         except Exception as ocr_error:
-                            logging.info(f"OCR failed for rotation {rotation}: {str(ocr_error)}")
+                            logging.warning(f"OCR failed for rotation {rotation}: {str(ocr_error)}")
                             # OCR failed, continue to next rotation
                             continue
 
                 except Exception as e:
-                    logging.info(f"Rotation {rotation} failed: {str(e)}")
+                    logging.warning(f"Rotation {rotation} failed: {str(e)}")
                     # If this rotation fails, continue to next rotation
                     continue
 
             # If all rotations and OCR attempts failed, return empty string
-            logging.info("All rotation attempts and OCR failed, returning empty string")
+            logging.warning("All rotation attempts and OCR failed, returning empty string")
             return ""
 
         # Extract text from PDF with rotation attempts
@@ -187,7 +204,7 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
         text_content = extract_text_with_rotation(io.BytesIO(pdf_content))
 
         if not text_content.strip():
-            logging.info(f"Failed to extract any text from PDF: {file.filename}")
+            logging.error(f"Failed to extract any text from PDF: {file.filename}")
             raise HTTPException(status_code=400, detail="Could not extract text from PDF even after trying different rotations")
 
         logging.info(f"Successfully extracted text from PDF, length: {len(text_content.strip())}")
@@ -230,7 +247,7 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
             )
             logging.info("ChatGPT API call successful")
         except Exception as e:
-            logging.info(f"ChatGPT API call failed: {str(e)}")
+            logging.error(f"ChatGPT API call failed: {str(e)}")
             raise HTTPException(status_code=500, detail="Failed to process document with AI service")
 
         # Parse the response
@@ -302,7 +319,7 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
                     )
             elif appointment_type not in valid_types:
                 # This shouldn't happen with the above logic, but just in case
-                logging.info(f"Invalid appointment type after validation: {appointment_type}")
+                logging.warning(f"Invalid appointment type after validation: {appointment_type}")
                 raise HTTPException(
                     status_code=409,
                     detail=f"Invalid appointment type: {appointment_type}"
@@ -310,22 +327,29 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
 
             logging.info(f"Final appointment type: {parsed_data['appointment_type']}")
 
-            # Validate date format (basic check)
+            # Validate date format with proper parsing
             date_str = parsed_data.get('date', '').strip()
             logging.info(f"Original date: '{date_str}'")
-            if not date_str or len(date_str.split('-')) != 3:
+            if not date_str:
                 parsed_data['date'] = datetime.now().strftime('%Y-%m-%d')
-                logging.warning(f"Invalid date format, using current date: {parsed_data['date']}")
+                logging.warning(f"Empty date, using current date: {parsed_data['date']}")
             else:
-                logging.info(f"Valid date format: {date_str}")
+                try:
+                    # Try to parse the date to validate it's a real date
+                    datetime.strptime(date_str, '%Y-%m-%d')
+                    logging.info(f"Valid date format: {date_str}")
+                except ValueError:
+                    # If parsing fails, use current date
+                    parsed_data['date'] = datetime.now().strftime('%Y-%m-%d')
+                    logging.warning(f"Invalid date '{date_str}', using current date: {parsed_data['date']}")
 
             appointment_data = AppointmentData(**parsed_data)
             logging.info("Successfully created AppointmentData object")
 
         except (json.JSONDecodeError, ValueError) as e:
             # Fallback if JSON parsing fails - this represents low confidence
-            logging.info(f"Failed to parse JSON response: {str(e)}")
-            logging.info(f"Raw response that failed parsing: {result_text[:1000]}")
+            logging.error(f"Failed to parse JSON response: {str(e)}")
+            logging.error(f"Raw response that failed parsing: {result_text[:1000]}")
             raise HTTPException(
                 status_code=400,
                 detail="Failed to parse JSON response from AI service. Unable to extract appointment information."
@@ -370,15 +394,16 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
             return JSONResponse(content=response_data)
 
         except Exception as e:
-            logging.info(f"Database operation failed: {str(e)}")
+            db.rollback()
+            logging.error(f"Database operation failed: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
     except HTTPException:
         # Re-raise HTTPExceptions as they already have the correct status code
-        logging.info("HTTPException raised during appointment processing")
+        logging.warning("HTTPException raised during appointment processing")
         raise
     except Exception as e:
-        logging.info(f"Unexpected error during PDF processing: {str(e)}")
+        logging.error(f"Unexpected error during PDF processing: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error processing PDF: {str(e)}")
 
 @router.get("/parsed-appointments", response_model=List[ParsedAppointmentResponse])

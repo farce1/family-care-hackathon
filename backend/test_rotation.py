@@ -15,7 +15,7 @@ except ImportError:
 
 def extract_text_with_rotation(pdf_bytes):
     """Extract text from PDF, trying different rotations and OCR if needed."""
-    rotations = [0, 90, 180, 270]  # Try each rotation up to 360 degrees
+    rotations = [0, 90, 180, 270]  # Try each rotation up to 270 degrees
 
     for rotation in rotations:
         try:
