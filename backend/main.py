@@ -7,6 +7,15 @@ from models import Base, User
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import os
+import logging
+import sys
+
+# Configure logging to output to stdout
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    stream=sys.stdout
+)
 
 # Database setup
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://familycare:familycare@postgres:5432/familycare")
