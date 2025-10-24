@@ -186,7 +186,7 @@ class NFZService:
         """Safely convert coordinate value to string"""
         if value is None:
             return "0"
-        if isinstance(value, (int, float)):
+        if isinstance(value, int | float):
             return str(value)
         if isinstance(value, str):
             return value
