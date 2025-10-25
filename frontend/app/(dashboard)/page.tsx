@@ -13,7 +13,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DocumentTimeline } from "@/components/document-timeline";
-import { BookAppointmentDialog } from "@/components/book-appointment-dialog";
 import { UploadMedicalRecordDialog } from "@/components/upload-medical-record-dialog";
 import { currentUser, getUpcomingAppointments, getArchivalAppointments } from "@/lib/mock-data";
 import { useParsedAppointments } from "@/lib/hooks/use-parsed-appointments";
@@ -111,7 +110,6 @@ export default function Home() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <BookAppointmentDialog />
               <UploadMedicalRecordDialog />
             </div>
           </div>

@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/table";
 import { DocumentTimeline } from "@/components/document-timeline";
 import { Particles } from "@/components/ui/particles";
-import { BookAppointmentDialog } from "@/components/book-appointment-dialog";
 import { UploadMedicalRecordDialog } from "@/components/upload-medical-record-dialog";
 import { getFamilyMember, getDocumentsForMember, getAppointmentsForMember } from "@/lib/mock-data";
 import {
@@ -127,7 +126,6 @@ export default async function FamilyMemberPage({ params }: FamilyMemberPageProps
             Back to Family Members
           </Link>
           <div className="flex items-center gap-3">
-            <BookAppointmentDialog />
             <UploadMedicalRecordDialog />
           </div>
         </div>

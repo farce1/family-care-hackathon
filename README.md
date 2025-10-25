@@ -28,14 +28,12 @@
 - Keep the details of you and your family's past appointments by uploading PDFs of your medical records
 - Be reminded of outdated medical statistics
 - Book next appointments through the NFZ API
-- Talk to your data via our MCP server
 
 ## **🏗️ Architecture** <a name="arch"></a>
 
 - Frontend build in Next.js
 - FastAPI-based backend
 - PostgreSQL database storing fragile information
-- MCP server for talking to your health data
 
 
 ## **🚀 Getting Started**
@@ -68,7 +66,6 @@ Follow these steps to set up Family Care in your environment.
    - **Frontend** (Next.js) - http://localhost:3000
    - **Backend** (FastAPI) - http://localhost:8000
    - **PostgreSQL Database** - localhost:5434
-   - **MCP Server** - http://localhost:8888
 
 4. Create a test user:
    ```bash
@@ -125,43 +122,6 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 The API will be available at http://localhost:8000
 API documentation: http://localhost:8000/docs
-
-### MCP Server
-
-**Prerequisites:**
-- Python 3.12+
-- uv package manager (`pip install uv`)
-
-**Setup:**
-```bash
-cd mcp-server
-uv sync
-
-# Run in development mode
-uv run fastmcp dev app/main.py:mcp
-```
-
-The MCP server will start in development mode.
-
-**Using MCP Inspector:**
-
-The MCP Inspector is a web-based tool for testing and debugging MCP servers.
-
-```bash
-# Install MCP Inspector globally
-npm install -g @modelcontextprotocol/inspector
-
-# Run the inspector (from mcp-server directory)
-mcp-inspector uv run fastmcp run app/main.py:mcp
-```
-
-This will open a browser interface where you can:
-- Test MCP tools and resources
-- Inspect server capabilities
-- Debug tool calls and responses
-
-**Environment Variables for MCP:**
-- `BACKEND_URL` - URL of the FastAPI backend (default: http://localhost:8000)
 
 ## 📄 License
 

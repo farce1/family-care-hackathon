@@ -4,85 +4,204 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Family Care is a monorepo hackathon project containing a family health management dashboard with a Next.js frontend and FastAPI backend. The application features a login system (cookie-based) and a dashboard interface to manage family health information.
+Family Care is a comprehensive health management platform that helps users manage their family's medical records, appointments, and wellness information. The system uses AI to parse medical documents (PDFs) and extract structured appointment data.
+
+**Key capabilities:**
+- PDF medical record parsing using OpenAI GPT-3.5-turbo with OCR fallback (pytesseract + pdf2image)
+- JWT-based authentication (email-only login)
+- PostgreSQL database with SQLAlchemy ORM and Alembic migrations
+- Next.js 15 frontend with React 19, TanStack Query, and shadcn/ui components
 
 ## Architecture
 
-**Monorepo Structure:**
-- `frontend/` - Next.js 15.5.4 application with React 19
-- `backend/` - FastAPI Python service
+### Two-tier Application Structure
 
-**Frontend Stack:**
-- Next.js 15 with App Router (route groups used for layout organization)
-- TypeScript with strict mode
-- Tailwind CSS 4 + Radix UI components
-- TanStack Query for data fetching (configured in `lib/providers.tsx`)
-- Zod for validation
-- Magic UI components for animations (TextAnimate, Particles, BorderBeam, ShimmerButton)
-- Custom fonts: Nunito (body), Quicksand (headings)
+1. **Frontend (Next.js 15)**: `frontend/`
+   - App Router with route groups: `(dashboard)` for authenticated pages
+   - API layer in `lib/api/` with centralized configuration
+   - Component structure: `components/ui/` (shadcn), `components/*` (custom)
+   - Key routes:
+     - `/` - Dashboard with health statistics
+     - `/family` - Family members list
+     - `/family/[id]` - Individual family member details
+     - `/login` - Authentication page
 
-**Backend Stack:**
-- FastAPI with uvicorn
-- Currently minimal (one `/hello` endpoint)
+2. **Backend (FastAPI)**: `backend/`
+   - Controllers: `controllers/auth.py`, `controllers/appointments.py`
+   - Database models: `models.py` (User, ParsedAppointment)
+   - Utilities: `utils.py` (default user management)
+   - Database migrations: `alembic/versions/`
+   - Default user created on startup for no-auth operations
 
-**Key Architectural Patterns:**
-- Route groups: `app/(dashboard)/` for authenticated pages with sidebar layout
-- Path aliases: `@/*` maps to frontend root
-- Client/Server Components: Login form and sidebar are client components; pages use server components where possible
-- Provider pattern: React Query provider wraps app in `lib/providers.tsx`
-- Validation: Zod schemas used for form validation (see `login-form.tsx`)
+### Database Schema
+
+**Users Table:**
+- Primary auth via email only (no passwords)
+- UUID primary keys
+- Timestamps: created_at, updated_at, last_login
+
+**ParsedAppointments Table:**
+- Linked to users via user_id (UUID foreign key with CASCADE delete)
+- Stores original PDF as BYTEA in `raw_file_data`
+- Fields: name, date, appointment_type, summary, doctor, file_size
+- Processing metadata: confidence_score (0-100), processing_status
+- Valid appointment types: General Checkup, Dental, Vision, Specialist, Vaccination, Follow-up, Emergency, Lab Work, Physical Therapy, Mental Health, Veterinary, Other
+
+### PDF Processing Pipeline
+
+The `/parse-pdf` endpoint implements sophisticated document processing:
+
+1. **Text Extraction** (`backend/controllers/appointments.py:119-216`):
+   - Tries 4 rotations (0°, 90°, 180°, 270°) using PyPDF2
+   - Falls back to OCR (pytesseract) if regular extraction fails
+   - Supports Polish and English OCR
+
+2. **AI Parsing**:
+   - Uses GPT-3.5-turbo with temperature=0.1 for consistency
+   - Extracts structured data: name, date, appointment_type, summary, doctor, confidence_score
+   - Comprehensive medical summary generation with patient-friendly explanations
+
+3. **Validation**:
+   - Rejects documents with confidence_score < 51
+   - Validates date format (YYYY-MM-DD), defaults to current date if invalid
+   - Checks required fields: name, date, summary, doctor
+   - Sets appointment_type to "Other" if invalid but confidence > 51
+
+4. **Storage**:
+   - Saves parsed data to database linked to default user
+   - Stores original PDF bytes in raw_file_data column
 
 ## Development Commands
 
-**Frontend (from `frontend/` directory):**
+### Frontend (from `frontend/`)
+
 ```bash
-npm run dev          # Start dev server with Turbopack on localhost:3000
-npm run build        # Production build with Turbopack
-npm start            # Start production server
-npm run lint         # Run ESLint
+npm install              # Install dependencies
+npm run dev              # Development server with Turbopack
+npm run build            # Production build with Turbopack
+npm start                # Start production server
+npm run lint             # Run oxlint
+npm run lint:fix         # Run oxlint with auto-fix
+npm run format           # Format code with Prettier
+npm run format:check     # Check code formatting
 ```
 
-**Backend (from `backend/` directory):**
+### Backend (from `backend/`)
+
 ```bash
+# Setup
 pip install -r requirements.txt
+
+# Environment variables required:
+# - OPENAI_API_KEY or API_KEY (for PDF parsing)
+# - DATABASE_URL (defaults to Docker Compose URL)
+# - SECRET_KEY (for JWT, defaults to "your-secret-key-here")
+
+# Run server
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
+
+# Database migrations
+alembic upgrade head     # Apply all migrations
+alembic revision --autogenerate -m "description"  # Create new migration
+
+# Linting and formatting
+ruff check .             # Check code
+ruff check --fix .       # Fix auto-fixable issues
+ruff format .            # Format code
 ```
 
-**Full Stack (from root):**
+### Docker Compose (from project root)
+
 ```bash
-docker-compose up              # Start both services
-docker-compose up --build      # Rebuild and start
+docker-compose up --build           # Start all services
+docker-compose down                 # Stop all services
+docker-compose logs -f backend      # View backend logs
+
+# Services and ports:
+# - Frontend: http://localhost:3000
+# - Backend: http://localhost:8000
+# - Backend API docs: http://localhost:8000/docs
+# - PostgreSQL: localhost:5434
+
+# Create test user:
+curl -X POST "http://localhost:8000/auth/create-test-user?email=test@example.com&first_name=Test&last_name=User"
+```
+
+### Testing
+
+Backend tests are located in `backend/tests/` but test commands are not configured in requirements.txt. To run tests:
+
+```bash
+cd backend
+pytest                   # Run all tests
+pytest -v               # Verbose output
+pytest tests/test_specific.py  # Run specific test file
 ```
 
 ## Important Implementation Details
 
-**Authentication:**
-- Currently using cookie-based auth (`logged-in=true` cookie set in `login-form.tsx:57`)
-- No actual backend authentication yet - this is a mock implementation
-- Cookie expires after 24 hours
+### Authentication Flow
+- Email-only authentication (no passwords)
+- JWT tokens expire after 30 minutes
+- `/auth/login` returns token + user info
+- `/auth/me` gets current user from Bearer token
+- Frontend stores token and uses it in API calls
 
-**Route Protection:**
-- Dashboard routes are in `(dashboard)` route group with shared layout
-- Login page is separate at `/login`
+### Environment Configuration
+- Frontend: `NEXT_PUBLIC_API_URL` for API base URL (falls back to localhost:8000)
+- Backend database URL can be overridden via `DATABASE_URL` env var
+- Default database: `postgresql://familycare:familycare@postgres:5432/familycare`
 
-**UI Components:**
-- Mix of shadcn/ui (Radix-based) and Magic UI components
-- Theme: Orange/amber color palette (`orange-400`, `amber-50`, etc.)
-- Components in `components/ui/` directory
-- App-specific components in `components/` root
+### CORS Configuration
+Backend allows all origins (`allow_origins=["*"]`) - should be restricted in production.
 
-**Data Fetching:**
-- TanStack Query configured with 60s stale time
-- Window focus refetch disabled
-- DevTools available in development
+### Default User
+- Created automatically on backend startup
+- Email: mcpuser@example.com
+- Used for PDF parsing when no user is authenticated
+- Managed by `utils.get_default_mcp_user()`
 
-**Environment Variables:**
-- `NEXT_PUBLIC_API_URL` for backend connection (set to `http://backend:8000` in docker-compose)
+### Code Style
+- **Backend**: Ruff with line length 100, Python 3.11 target
+  - Auto-fixes enabled for most rules
+  - Follows Black style for formatting
+  - Ignores E501 (line too long, handled by formatter)
+- **Frontend**: Prettier + oxlint
+  - Uses Turbopack for dev and build
+  - Next.js 15 with standalone output mode
 
-## Docker Configuration
+## Common Patterns
 
-Frontend uses standalone output mode (`next.config.ts:4`) for optimized Docker builds. Backend runs with hot reload enabled in development.
+### Adding a New API Endpoint
 
-## Theme & Styling
+1. Add route to appropriate controller in `backend/controllers/`
+2. Define Pydantic request/response models if needed
+3. Use `Depends(get_db)` for database access
+4. Add endpoint to `frontend/lib/api/config.ts` constants
+5. Create API function in appropriate `frontend/lib/api/*.ts` file
+6. Use TanStack Query hooks in components
 
-The application uses a warm, family-friendly design with orange/amber gradients, particle effects, and smooth animations. All custom colors follow the orange theme (orange-100 to orange-900, amber variants).
+### Creating Database Migration
+
+```bash
+cd backend
+# 1. Modify models.py
+# 2. Generate migration
+alembic revision --autogenerate -m "add new field to users"
+# 3. Review generated migration in alembic/versions/
+# 4. Apply migration
+alembic upgrade head
+```
+
+### Adding a New Frontend Route
+
+1. Create directory in `frontend/app/(dashboard)/` for authenticated routes
+2. Add `page.tsx` file with the component
+3. Update `frontend/components/app-sidebar.tsx` if adding to navigation
+4. Use `"use client"` directive if using hooks or client-side features
+
+## API Documentation
+
+Backend FastAPI auto-generates OpenAPI docs at:
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc

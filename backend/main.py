@@ -9,7 +9,6 @@ from sqlalchemy.orm import sessionmaker
 
 from controllers.appointments import router as appointments_router
 from controllers.auth import router as auth_router
-from controllers.upcoming_appointments import router as upcoming_router
 from models import User
 
 # Configure logging to output to stdout
@@ -76,4 +75,3 @@ app.add_middleware(
 # Include routers
 app.include_router(auth_router, prefix="/auth", tags=["authentication"])
 app.include_router(appointments_router)
-app.include_router(upcoming_router)
