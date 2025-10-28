@@ -45,4 +45,3 @@ export async function fetchParsedAppointments(): Promise<ParsedAppointment[]> {
   const data = await response.json();
   return data;
 }
-
