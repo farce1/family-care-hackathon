@@ -5,15 +5,10 @@ from datetime import datetime
 
 import PyPDF2
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 from openai import OpenAI
 from pydantic import BaseModel
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
-
-from models import ParsedAppointment
-from utils import get_default_mcp_user
 
 try:
     import pytesseract
@@ -32,22 +27,6 @@ if not OPENAI_API_KEY:
     raise ValueError("OPENAI_API_KEY environment variable is not set")
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-# Database setup - use environment variable with fallback
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql://familycare:familycare@postgres:5432/familycare"
-)
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-
-# Dependency to get database session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
 
 class AppointmentData(BaseModel):
     name: str = "Medical Report"
@@ -59,19 +38,6 @@ class AppointmentData(BaseModel):
     confidence_score: int = 0
 
 
-class ParsedAppointmentResponse(BaseModel):
-    id: str
-    original_filename: str
-    name: str
-    date: str
-    appointment_type: str
-    summary: str | None
-    doctor: str | None
-    file_size: int
-    processing_status: str
-    confidence_score: int
-    created_at: str
-    updated_at: str
 
 
 # Create router
@@ -82,10 +48,9 @@ MAX_FILE_SIZE = 15 * 1024 * 1024
 
 
 @router.post("/parse-pdf")
-async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def parse_pdf(file: UploadFile = File(...)):
     """
     Parse PDF file to extract appointment information using ChatGPT API.
-    Stores the parsed data in the database.
 
     Parameters:
         file: PDF file to parse
@@ -97,7 +62,7 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
         summary: Summary of appointment or medical recommendations
         file_size: Size of the uploaded file in bytes
         doctor: Name of doctor or facility name if doctor not available
-        id: Database ID of the stored record
+        confidence_score: AI confidence score (0-100)
     """
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="File must be a PDF")
@@ -401,48 +366,11 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
                 detail="Failed to parse JSON response from AI service. Unable to extract appointment information.",
             )
 
-        # Always save to database
-        logging.info("Saving appointment data to database")
-        try:
-            # Get default MCP user for no-auth operations
-            logging.info("Getting default MCP user")
-            default_user = get_default_mcp_user(db)
-
-            # Create database record with default user reference
-            logging.info("Creating ParsedAppointment database record")
-            db_appointment = ParsedAppointment(
-                user_id=default_user.id,
-                original_filename=file.filename,
-                name=appointment_data.name,
-                date=datetime.strptime(appointment_data.date, "%Y-%m-%d").date(),
-                appointment_type=appointment_data.appointment_type,
-                summary=appointment_data.summary,
-                doctor=appointment_data.doctor,
-                file_size=appointment_data.file_size,
-                raw_file_data=pdf_content,  # Store the original PDF
-                processing_status="completed",
-                confidence_score=appointment_data.confidence_score,
-            )
-
-            # Save to database using the injected session
-            logging.info("Adding appointment to database session")
-            db.add(db_appointment)
-            logging.info("Committing database transaction")
-            db.commit()
-            db.refresh(db_appointment)
-
-            logging.info(f"Successfully saved appointment to database with ID: {db_appointment.id}")
-
-            # Add the database ID to the response
-            response_data = appointment_data.model_dump()
-            response_data["id"] = str(db_appointment.id)
-            logging.info("Appointment processing completed successfully")
-            return JSONResponse(content=response_data)
-
-        except Exception as e:
-            db.rollback()
-            logging.error(f"Database operation failed: {e!s}")
-            raise HTTPException(status_code=500, detail=f"Database error: {e!s}")
+        # Return parsed appointment data
+        logging.info("Appointment processing completed successfully")
+        response_data = appointment_data.model_dump()
+        response_data["original_filename"] = file.filename
+        return JSONResponse(content=response_data)
 
     except HTTPException:
         # Re-raise HTTPExceptions as they already have the correct status code
@@ -451,40 +379,3 @@ async def parse_pdf(file: UploadFile = File(...), db: Session = Depends(get_db))
     except Exception as e:
         logging.error(f"Unexpected error during PDF processing: {e!s}")
         raise HTTPException(status_code=500, detail=f"Error processing PDF: {e!s}")
-
-
-@router.get("/parsed-appointments", response_model=list[ParsedAppointmentResponse])
-async def get_parsed_appointments(db: Session = Depends(get_db)):
-    """
-    Get all parsed appointments (no auth required).
-
-    Returns:
-        List of all parsed appointments
-    """
-    try:
-        # Query all parsed appointments
-        appointments = db.query(ParsedAppointment).all()
-
-        # Convert to response format
-        response_data = []
-        for appointment in appointments:
-            response_data.append(
-                ParsedAppointmentResponse(
-                    id=str(appointment.id),
-                    original_filename=appointment.original_filename,
-                    name=appointment.name,
-                    date=appointment.date.isoformat(),
-                    appointment_type=appointment.appointment_type,
-                    summary=appointment.summary,
-                    doctor=appointment.doctor,
-                    file_size=appointment.file_size,
-                    processing_status=appointment.processing_status,
-                    confidence_score=appointment.confidence_score,
-                    created_at=appointment.created_at.isoformat(),
-                    updated_at=appointment.updated_at.isoformat(),
-                )
-            )
-
-        return response_data
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {e!s}")
